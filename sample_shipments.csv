@@ -1,0 +1,501 @@
+Shipping Label ID,Order date,Warehouse,Warehouse ID,Carrier,Shipping Method,Zip,State,Country,Label Cost,Weight (lb),Total Shipping Charged
+SL100000,2024-03-23,ShipHero East / Newark,1002,fedex,2Day Air,32825,TN,US,16.04,7.07,19.25
+SL100001,2024-03-10,ShipHero East / Newark,1002,usps,Std US D2D Dom,87089,MS,US,8.54,8.01,10.25
+SL100002,2024-01-12,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,61561,NV,US,15.01,1.87,18.01
+SL100003,2024-01-03,ShipHero East / Newark,1002,ups,Ground,27066,KY,US,8.36,2.94,10.03
+SL100004,2024-01-01,ShipHero East / Newark,1002,dhl,Std US D2D Dom,82426,WA,US,13.88,6.09,16.66
+SL100005,2024-03-02,ShipHero East / Newark,1002,amazon,Ground,54732,NY,US,6.49,2.44,7.79
+SL100006,2024-02-22,ShipHero East / Newark,1002,usps,2Day Air,59643,WV,US,9.91,3.97,11.89
+SL100007,2024-03-23,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,64471,OR,US,7.37,7.25,8.84
+SL100008,2024-02-11,ShipHero East / Newark,1002,ups,2Day Air,19187,IL,US,13.62,4.73,16.34
+SL100009,2024-02-06,ShipHero East / Newark,1002,dhl,Std US D2D Dom,94068,AR,US,14.0,9.48,16.8
+SL100010,2024-02-23,ShipHero East / Newark,1002,fedex,2Day Air,67568,AL,US,8.34,3.51,10.01
+SL100011,2024-02-13,ShipHero East / Newark,1002,fedex,Ground,50973,NJ,US,15.3,5.43,18.36
+SL100012,2024-02-27,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,66029,MI,US,14.1,6.74,16.92
+SL100013,2024-02-14,ShipHero East / Newark,1002,fedex,Ground,94586,PA,US,6.75,4.74,8.1
+SL100014,2024-03-20,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,13691,CO,US,17.78,6.59,21.34
+SL100015,2024-03-07,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,65100,NH,US,13.05,6.77,15.66
+SL100016,2024-01-23,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,92615,TN,US,10.24,6.25,12.29
+SL100017,2024-01-17,ShipHero East / Newark,1002,fedex,2Day Air,90920,ID,US,10.95,2.61,13.14
+SL100018,2024-01-29,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,17717,WA,US,10.07,5.12,12.08
+SL100019,2024-02-13,ShipHero East / Newark,1002,amazon,Ground,71476,CT,US,3.75,9.58,4.5
+SL100020,2024-01-07,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,54381,NC,US,6.44,3.93,7.73
+SL100021,2024-01-16,ShipHero East / Newark,1002,ups,Std US D2D Dom,51950,AK,US,9.05,6.8,10.86
+SL100022,2024-02-20,ShipHero East / Newark,1002,ups,Ground,53492,MD,US,15.67,2.2,18.8
+SL100023,2024-01-25,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,40728,MD,US,16.91,6.98,20.29
+SL100024,2024-02-09,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,56575,NC,US,17.39,8.14,20.87
+SL100025,2024-03-29,ShipHero East / Newark,1002,dhl,Priority Mail,62215,OR,US,7.96,3.62,9.55
+SL100026,2024-02-04,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,69956,NE,US,14.81,4.7,17.77
+SL100027,2024-02-13,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,53550,WV,US,12.88,6.49,15.46
+SL100028,2024-02-18,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,41742,KY,US,6.74,8.78,8.09
+SL100029,2024-02-22,ShipHero East / Newark,1002,dhl,2Day Air,93092,MI,US,5.72,9.54,6.86
+SL100030,2024-03-07,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,54060,CT,US,11.06,2.04,13.27
+SL100031,2024-03-31,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,36706,OK,US,5.88,5.4,7.06
+SL100032,2024-01-16,ShipHero East / Newark,1002,ups,2Day Air,35805,MT,US,15.62,7.45,18.74
+SL100033,2024-02-03,ShipHero East / Newark,1002,amazon,Priority Mail,59387,CO,US,13.75,2.88,16.5
+SL100034,2024-02-09,ShipHero East / Newark,1002,dhl,Priority Mail,78557,VA,US,7.17,9.5,8.6
+SL100035,2024-03-15,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,70336,NH,US,14.51,4.5,17.41
+SL100036,2024-03-11,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,99000,VA,US,16.14,7.4,19.37
+SL100037,2024-03-04,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,31752,CO,US,9.38,2.18,11.26
+SL100038,2024-01-01,ShipHero East / Newark,1002,amazon,Ground,83722,HI,US,17.45,9.89,20.94
+SL100039,2024-03-06,ShipHero East / Newark,1002,amazon,Std US D2D Dom,74496,MA,US,5.99,4.84,7.19
+SL100040,2024-03-10,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,35942,KS,US,14.22,1.28,17.06
+SL100041,2024-02-10,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,26784,TN,US,6.47,9.24,7.76
+SL100042,2024-01-06,ShipHero East / Newark,1002,fedex,Std US D2D Dom,91557,KS,US,14.35,2.56,17.22
+SL100043,2024-02-26,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,66477,TN,US,13.17,0.8,15.8
+SL100044,2024-03-16,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,63452,MN,US,16.59,5.16,19.91
+SL100045,2024-03-18,ShipHero East / Newark,1002,ups,Ground,63180,ND,US,10.52,1.71,12.62
+SL100046,2024-01-12,ShipHero East / Newark,1002,ups,Std US D2D Dom,15894,TN,US,9.82,3.97,11.78
+SL100047,2024-01-15,ShipHero East / Newark,1002,fedex,Std US D2D Dom,29250,CT,US,6.51,7.96,7.81
+SL100048,2024-03-27,ShipHero East / Newark,1002,ups,Priority Mail,57936,HI,US,11.41,3.37,13.69
+SL100049,2024-01-14,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,55001,NJ,US,17.14,9.51,20.57
+SL100050,2024-01-11,ShipHero East / Newark,1002,fedex,Ground,40872,TX,US,5.13,5.09,6.16
+SL100051,2024-01-11,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,41077,MD,US,16.52,6.7,19.82
+SL100052,2024-01-12,ShipHero East / Newark,1002,fedex,Priority Mail,51600,NH,US,10.01,3.81,12.01
+SL100053,2024-02-14,ShipHero East / Newark,1002,dhl,Priority Mail,86397,OH,US,12.35,1.57,14.82
+SL100054,2024-01-21,ShipHero East / Newark,1002,usps,Priority Mail,25380,KS,US,17.02,4.85,20.42
+SL100055,2024-01-01,ShipHero East / Newark,1002,amazon,Ground,82592,GA,US,8.54,8.75,10.25
+SL100056,2024-02-29,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,46263,OR,US,11.68,8.09,14.02
+SL100057,2024-03-23,ShipHero East / Newark,1002,dhl,Ground,78194,OH,US,17.9,8.31,21.48
+SL100058,2024-01-18,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,77499,VT,US,9.31,0.74,11.17
+SL100059,2024-03-31,ShipHero East / Newark,1002,ups,Std US D2D Dom,62913,AZ,US,11.14,8.75,13.37
+SL100060,2024-01-21,ShipHero East / Newark,1002,usps,Priority Mail,89134,UT,US,11.15,7.96,13.38
+SL100061,2024-01-13,ShipHero East / Newark,1002,dhl,Ground,61217,AK,US,11.36,8.26,13.63
+SL100062,2024-02-10,ShipHero East / Newark,1002,dhl,Priority Mail,97376,WY,US,15.21,3.79,18.25
+SL100063,2024-02-16,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,79109,MT,US,8.44,1.7,10.13
+SL100064,2024-01-30,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,46884,NH,US,14.66,8.84,17.59
+SL100065,2024-02-12,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,93096,AR,US,8.35,0.9,10.02
+SL100066,2024-01-17,ShipHero East / Newark,1002,amazon,Priority Mail,14591,IN,US,15.83,9.08,19.0
+SL100067,2024-01-13,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,99317,CT,US,17.27,0.58,20.72
+SL100068,2024-03-27,ShipHero East / Newark,1002,ups,Std US D2D Dom,96389,TX,US,16.48,1.68,19.78
+SL100069,2024-01-24,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,46079,GA,US,8.56,1.16,10.27
+SL100070,2024-01-25,ShipHero East / Newark,1002,usps,Priority Mail,10266,OR,US,4.93,5.07,5.92
+SL100071,2024-03-08,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,70379,NY,US,12.55,8.12,15.06
+SL100072,2024-03-26,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,23369,TN,US,17.96,9.3,21.55
+SL100073,2024-01-18,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,56899,UT,US,6.97,2.61,8.36
+SL100074,2024-01-14,ShipHero East / Newark,1002,ups,Priority Mail,44231,UT,US,16.68,4.59,20.02
+SL100075,2024-03-28,ShipHero East / Newark,1002,usps,2Day Air,65777,AK,US,9.15,6.03,10.98
+SL100076,2024-03-12,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,22777,SC,US,13.15,5.22,15.78
+SL100077,2024-03-09,ShipHero East / Newark,1002,ups,Priority Mail,34397,PA,US,5.64,1.54,6.77
+SL100078,2024-01-28,ShipHero East / Newark,1002,dhl,2Day Air,93399,KY,US,17.97,1.69,21.56
+SL100079,2024-03-12,ShipHero East / Newark,1002,fedex,Ground,43507,KY,US,8.1,0.91,9.72
+SL100080,2024-01-13,ShipHero East / Newark,1002,usps,2Day Air,93622,MD,US,8.55,6.46,10.26
+SL100081,2024-02-13,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,65866,MS,US,7.02,5.86,8.42
+SL100082,2024-03-29,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,84048,VT,US,12.73,9.65,15.28
+SL100083,2024-01-23,ShipHero East / Newark,1002,amazon,2Day Air,55105,TN,US,6.73,8.07,8.08
+SL100084,2024-03-08,ShipHero East / Newark,1002,fedex,Priority Mail,49165,DE,US,11.29,9.64,13.55
+SL100085,2024-01-18,ShipHero East / Newark,1002,ups,2Day Air,77527,VA,US,4.39,8.41,5.27
+SL100086,2024-02-12,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,41107,TX,US,11.14,5.69,13.37
+SL100087,2024-01-04,ShipHero East / Newark,1002,usps,Ground,60018,MN,US,11.04,8.19,13.25
+SL100088,2024-01-14,ShipHero East / Newark,1002,usps,2Day Air,41072,MD,US,10.58,7.1,12.7
+SL100089,2024-03-08,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,74049,SC,US,16.56,4.46,19.87
+SL100090,2024-02-09,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,12549,TN,US,5.71,3.83,6.85
+SL100091,2024-02-02,ShipHero East / Newark,1002,fedex,Priority Mail,82603,ME,US,16.81,1.77,20.17
+SL100092,2024-01-11,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,55275,KY,US,5.6,6.59,6.72
+SL100093,2024-01-18,ShipHero East / Newark,1002,usps,2Day Air,63247,VT,US,11.19,2.88,13.43
+SL100094,2024-01-31,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,28468,IL,US,10.78,6.31,12.94
+SL100095,2024-02-13,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,22269,SD,US,9.29,2.86,11.15
+SL100096,2024-03-09,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,50363,SC,US,15.43,8.66,18.52
+SL100097,2024-01-28,ShipHero East / Newark,1002,ups,Ground,23015,NY,US,11.67,0.92,14.0
+SL100098,2024-01-22,ShipHero East / Newark,1002,amazon,Priority Mail,38053,VT,US,11.03,6.3,13.24
+SL100099,2024-02-19,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,19983,LA,US,3.96,3.12,4.75
+SL100100,2024-02-02,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,81818,OK,US,12.71,1.76,15.25
+SL100101,2024-02-22,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,30680,NY,US,16.51,7.68,19.81
+SL100102,2024-01-28,ShipHero East / Newark,1002,ups,Priority Mail,60253,KS,US,5.94,3.68,7.13
+SL100103,2024-02-01,ShipHero East / Newark,1002,fedex,Std US D2D Dom,76890,MI,US,17.66,6.53,21.19
+SL100104,2024-01-12,ShipHero East / Newark,1002,amazon,Priority Mail,70577,SD,US,3.67,7.72,4.4
+SL100105,2024-01-15,ShipHero East / Newark,1002,ups,Std US D2D Dom,55739,UT,US,16.63,7.12,19.96
+SL100106,2024-02-17,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,73609,MN,US,8.02,9.88,9.62
+SL100107,2024-01-14,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,60907,HI,US,12.76,7.11,15.31
+SL100108,2024-01-24,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,10504,GA,US,17.38,4.61,20.86
+SL100109,2024-02-22,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,47063,NC,US,13.75,7.73,16.5
+SL100110,2024-01-01,ShipHero East / Newark,1002,amazon,Std US D2D Dom,54117,CO,US,9.94,4.75,11.93
+SL100111,2024-02-29,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,28024,KS,US,3.77,0.68,4.52
+SL100112,2024-01-11,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,69711,NV,US,7.41,8.21,8.89
+SL100113,2024-01-28,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,12347,ME,US,16.99,1.24,20.39
+SL100114,2024-01-19,ShipHero East / Newark,1002,fedex,Ground,89148,SC,US,16.3,2.12,19.56
+SL100115,2024-02-18,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,39070,AZ,US,10.99,3.07,13.19
+SL100116,2024-02-21,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,37768,AZ,US,3.85,6.16,4.62
+SL100117,2024-01-15,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,38904,NV,US,8.27,0.83,9.92
+SL100118,2024-02-18,EPIC Warehouse Operations / Lindon,1001,usps,Ground,64054,NC,US,14.39,4.4,17.27
+SL100119,2024-01-29,ShipHero East / Newark,1002,fedex,2Day Air,72640,AL,US,10.97,8.29,13.16
+SL100120,2024-02-01,ShipHero East / Newark,1002,amazon,2Day Air,44283,IL,US,6.47,3.87,7.76
+SL100121,2024-03-26,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,97457,PA,US,5.76,8.24,6.91
+SL100122,2024-02-28,ShipHero East / Newark,1002,dhl,2Day Air,46765,NJ,US,17.49,9.84,20.99
+SL100123,2024-01-05,ShipHero East / Newark,1002,fedex,Priority Mail,30744,NH,US,16.74,4.34,20.09
+SL100124,2024-01-15,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,45025,MA,US,10.43,8.62,12.52
+SL100125,2024-01-03,ShipHero East / Newark,1002,usps,Ground,66227,HI,US,10.0,6.18,12.0
+SL100126,2024-01-12,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,92950,PA,US,9.85,5.23,11.82
+SL100127,2024-03-23,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,89356,CT,US,17.54,4.35,21.05
+SL100128,2024-01-12,ShipHero East / Newark,1002,fedex,Priority Mail,62926,LA,US,17.56,2.26,21.07
+SL100129,2024-03-21,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,38458,IN,US,10.84,8.49,13.01
+SL100130,2024-02-01,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,55495,MS,US,13.5,6.59,16.2
+SL100131,2024-03-18,ShipHero East / Newark,1002,dhl,2Day Air,72264,ME,US,17.59,8.21,21.11
+SL100132,2024-02-25,ShipHero East / Newark,1002,fedex,Ground,42062,ME,US,6.47,6.29,7.76
+SL100133,2024-01-27,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,13668,WV,US,3.89,2.4,4.67
+SL100134,2024-01-07,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,33016,TX,US,9.63,2.66,11.56
+SL100135,2024-02-01,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,54314,NY,US,3.76,1.2,4.51
+SL100136,2024-02-24,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,57511,AL,US,16.61,5.23,19.93
+SL100137,2024-03-27,ShipHero East / Newark,1002,amazon,Priority Mail,77808,LA,US,12.15,0.95,14.58
+SL100138,2024-01-24,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,72461,NV,US,10.58,1.92,12.7
+SL100139,2024-01-27,ShipHero East / Newark,1002,fedex,2Day Air,52917,LA,US,12.66,1.19,15.19
+SL100140,2024-01-27,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,65782,MI,US,6.22,5.55,7.46
+SL100141,2024-03-28,ShipHero East / Newark,1002,dhl,2Day Air,89120,MA,US,5.97,9.2,7.16
+SL100142,2024-03-15,ShipHero East / Newark,1002,ups,Priority Mail,12817,IL,US,6.33,7.41,7.6
+SL100143,2024-03-27,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,98895,MA,US,13.74,5.0,16.49
+SL100144,2024-03-15,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,43008,ND,US,4.6,5.26,5.52
+SL100145,2024-02-05,ShipHero East / Newark,1002,ups,Ground,28851,AZ,US,7.16,3.99,8.59
+SL100146,2024-01-26,ShipHero East / Newark,1002,fedex,Std US D2D Dom,55210,MA,US,9.36,5.91,11.23
+SL100147,2024-02-21,ShipHero East / Newark,1002,usps,2Day Air,70040,IN,US,6.49,0.79,7.79
+SL100148,2024-02-22,ShipHero East / Newark,1002,amazon,Priority Mail,69362,WA,US,13.66,3.14,16.39
+SL100149,2024-03-10,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,28793,KS,US,16.61,5.18,19.93
+SL100150,2024-02-11,ShipHero East / Newark,1002,fedex,Priority Mail,77344,NH,US,17.47,1.08,20.96
+SL100151,2024-03-15,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,43236,ND,US,5.34,2.25,6.41
+SL100152,2024-01-22,ShipHero East / Newark,1002,ups,2Day Air,46855,ID,US,15.24,0.86,18.29
+SL100153,2024-03-29,ShipHero East / Newark,1002,fedex,Ground,62221,OH,US,6.61,2.27,7.93
+SL100154,2024-03-03,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,16231,SD,US,15.6,9.12,18.72
+SL100155,2024-01-13,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,90725,ND,US,12.91,0.66,15.49
+SL100156,2024-03-16,ShipHero East / Newark,1002,usps,2Day Air,51259,GA,US,15.75,6.16,18.9
+SL100157,2024-01-17,ShipHero East / Newark,1002,usps,Priority Mail,68446,NJ,US,7.77,3.18,9.32
+SL100158,2024-02-04,ShipHero East / Newark,1002,dhl,Priority Mail,52893,IL,US,12.27,7.62,14.72
+SL100159,2024-01-29,ShipHero East / Newark,1002,dhl,Ground,56109,VA,US,7.78,3.98,9.34
+SL100160,2024-01-07,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,65190,MI,US,5.41,9.17,6.49
+SL100161,2024-03-18,ShipHero East / Newark,1002,amazon,Priority Mail,14448,MT,US,15.1,2.19,18.12
+SL100162,2024-02-08,ShipHero East / Newark,1002,usps,2Day Air,12168,WY,US,11.77,2.37,14.12
+SL100163,2024-03-24,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,57313,AK,US,7.53,6.76,9.04
+SL100164,2024-01-11,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,42881,CT,US,4.06,7.03,4.87
+SL100165,2024-02-18,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,92805,NE,US,9.32,1.43,11.18
+SL100166,2024-02-08,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,84029,OR,US,10.0,1.16,12.0
+SL100167,2024-01-14,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,53185,WY,US,16.31,0.98,19.57
+SL100168,2024-03-02,ShipHero East / Newark,1002,fedex,2Day Air,81017,NE,US,13.4,2.47,16.08
+SL100169,2024-03-01,ShipHero East / Newark,1002,fedex,Ground,70868,NV,US,17.11,8.54,20.53
+SL100170,2024-01-10,ShipHero East / Newark,1002,fedex,Priority Mail,26387,MA,US,7.33,7.11,8.8
+SL100171,2024-01-12,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,41463,AK,US,13.75,4.0,16.5
+SL100172,2024-03-26,ShipHero East / Newark,1002,dhl,Ground,82970,MT,US,16.03,9.29,19.24
+SL100173,2024-01-20,ShipHero East / Newark,1002,ups,Priority Mail,24734,GA,US,10.21,3.83,12.25
+SL100174,2024-01-26,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,25246,HI,US,6.84,4.78,8.21
+SL100175,2024-03-05,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,28012,IN,US,8.1,9.65,9.72
+SL100176,2024-02-12,ShipHero East / Newark,1002,dhl,Std US D2D Dom,57117,AK,US,15.95,2.33,19.14
+SL100177,2024-02-14,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,33147,MN,US,4.65,4.18,5.58
+SL100178,2024-02-22,ShipHero East / Newark,1002,ups,Ground,91598,NH,US,10.69,8.66,12.83
+SL100179,2024-02-11,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,92541,MD,US,11.87,3.32,14.24
+SL100180,2024-03-19,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,66100,AK,US,5.28,9.24,6.34
+SL100181,2024-03-26,ShipHero East / Newark,1002,dhl,Priority Mail,92072,OK,US,6.73,6.97,8.08
+SL100182,2024-01-19,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,21552,MA,US,7.74,7.81,9.29
+SL100183,2024-01-07,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,80241,DE,US,13.38,1.58,16.06
+SL100184,2024-03-17,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,74355,SC,US,10.66,7.92,12.79
+SL100185,2024-03-28,ShipHero East / Newark,1002,dhl,Priority Mail,48453,DE,US,7.21,8.19,8.65
+SL100186,2024-03-02,ShipHero East / Newark,1002,dhl,Std US D2D Dom,86991,AK,US,15.0,8.49,18.0
+SL100187,2024-03-25,ShipHero East / Newark,1002,fedex,Std US D2D Dom,54806,OR,US,11.72,3.12,14.06
+SL100188,2024-01-19,ShipHero East / Newark,1002,amazon,Ground,46699,FL,US,14.47,0.82,17.36
+SL100189,2024-03-01,ShipHero East / Newark,1002,fedex,2Day Air,34390,ND,US,8.34,3.15,10.01
+SL100190,2024-01-22,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,55048,KY,US,4.65,4.02,5.58
+SL100191,2024-02-15,ShipHero East / Newark,1002,ups,Priority Mail,33806,MO,US,15.45,4.29,18.54
+SL100192,2024-02-24,EPIC Warehouse Operations / Lindon,1001,usps,Ground,39903,RI,US,14.43,9.77,17.32
+SL100193,2024-03-04,ShipHero East / Newark,1002,amazon,2Day Air,28005,ND,US,12.81,8.27,15.37
+SL100194,2024-02-08,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,37862,MA,US,17.51,4.73,21.01
+SL100195,2024-01-14,EPIC Warehouse Operations / Lindon,1001,usps,Ground,68833,FL,US,4.63,0.67,5.56
+SL100196,2024-03-01,ShipHero East / Newark,1002,amazon,2Day Air,91211,MA,US,9.34,1.8,11.21
+SL100197,2024-01-27,ShipHero East / Newark,1002,amazon,Std US D2D Dom,37850,NC,US,13.76,7.1,16.51
+SL100198,2024-01-14,ShipHero East / Newark,1002,dhl,Std US D2D Dom,72059,VA,US,7.86,5.75,9.43
+SL100199,2024-03-15,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,24167,OK,US,5.31,5.03,6.37
+SL100200,2024-01-15,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,23408,IL,US,7.56,5.16,9.07
+SL100201,2024-03-28,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,81379,NV,US,6.0,5.69,7.2
+SL100202,2024-02-19,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,10570,MO,US,13.5,1.18,16.2
+SL100203,2024-03-06,ShipHero East / Newark,1002,amazon,Std US D2D Dom,49562,WY,US,14.72,2.09,17.66
+SL100204,2024-02-01,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,91270,OR,US,14.61,6.29,17.53
+SL100205,2024-02-16,ShipHero East / Newark,1002,amazon,Std US D2D Dom,71003,IL,US,18.0,2.14,21.6
+SL100206,2024-03-05,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,68180,AK,US,7.99,4.65,9.59
+SL100207,2024-03-23,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,18222,MO,US,7.37,1.93,8.84
+SL100208,2024-02-11,EPIC Warehouse Operations / Lindon,1001,usps,Ground,22266,IN,US,8.81,1.55,10.57
+SL100209,2024-02-29,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,92246,NC,US,6.37,7.41,7.64
+SL100210,2024-01-31,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,75421,MI,US,6.38,7.48,7.66
+SL100211,2024-03-13,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,31184,HI,US,4.2,9.82,5.04
+SL100212,2024-01-29,ShipHero East / Newark,1002,amazon,Priority Mail,76325,NY,US,12.46,3.66,14.95
+SL100213,2024-01-14,ShipHero East / Newark,1002,amazon,Ground,79437,MS,US,7.58,9.78,9.1
+SL100214,2024-02-06,EPIC Warehouse Operations / Lindon,1001,ups,Ground,79149,CO,US,13.05,8.8,15.66
+SL100215,2024-03-31,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,62694,AL,US,15.23,6.7,18.28
+SL100216,2024-02-29,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,14505,LA,US,8.67,3.0,10.4
+SL100217,2024-03-15,EPIC Warehouse Operations / Lindon,1001,usps,Ground,70913,NJ,US,4.62,3.76,5.54
+SL100218,2024-01-09,ShipHero East / Newark,1002,ups,Ground,89292,ND,US,6.91,2.15,8.29
+SL100219,2024-03-25,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,10372,MS,US,17.33,2.8,20.8
+SL100220,2024-01-11,ShipHero East / Newark,1002,ups,Priority Mail,60054,RI,US,10.48,9.43,12.58
+SL100221,2024-02-26,ShipHero East / Newark,1002,fedex,Std US D2D Dom,97442,MT,US,15.35,7.71,18.42
+SL100222,2024-03-06,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,96519,MI,US,13.18,3.77,15.82
+SL100223,2024-02-03,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,84373,WA,US,6.84,5.34,8.21
+SL100224,2024-03-27,ShipHero East / Newark,1002,fedex,2Day Air,34807,SC,US,4.71,4.84,5.65
+SL100225,2024-03-21,EPIC Warehouse Operations / Lindon,1001,usps,Ground,74698,AL,US,5.58,7.07,6.7
+SL100226,2024-03-09,ShipHero East / Newark,1002,dhl,Ground,70061,NH,US,7.87,7.65,9.44
+SL100227,2024-02-12,ShipHero East / Newark,1002,amazon,Std US D2D Dom,51155,IL,US,13.29,9.07,15.95
+SL100228,2024-03-08,ShipHero East / Newark,1002,usps,2Day Air,77265,MD,US,4.11,4.32,4.93
+SL100229,2024-02-20,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,83281,IL,US,12.9,7.89,15.48
+SL100230,2024-03-28,ShipHero East / Newark,1002,fedex,Ground,67003,NJ,US,9.45,8.71,11.34
+SL100231,2024-01-31,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,23208,OR,US,10.7,0.62,12.84
+SL100232,2024-02-26,ShipHero East / Newark,1002,ups,2Day Air,78727,CT,US,12.55,1.18,15.06
+SL100233,2024-03-05,ShipHero East / Newark,1002,fedex,Ground,29715,AZ,US,3.52,6.69,4.22
+SL100234,2024-01-21,EPIC Warehouse Operations / Lindon,1001,usps,Ground,55107,KY,US,7.63,7.12,9.16
+SL100235,2024-02-16,ShipHero East / Newark,1002,usps,Ground,66679,WI,US,11.18,9.82,13.42
+SL100236,2024-01-28,EPIC Warehouse Operations / Lindon,1001,usps,Ground,61899,RI,US,3.56,1.61,4.27
+SL100237,2024-02-07,ShipHero East / Newark,1002,dhl,2Day Air,30130,OK,US,15.53,5.26,18.64
+SL100238,2024-02-19,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,57245,KY,US,4.15,6.99,4.98
+SL100239,2024-01-20,EPIC Warehouse Operations / Lindon,1001,ups,Ground,68509,NV,US,15.39,5.29,18.47
+SL100240,2024-03-27,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,45344,WV,US,11.01,5.53,13.21
+SL100241,2024-03-03,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,87205,NE,US,4.62,8.1,5.54
+SL100242,2024-03-21,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,80994,KS,US,7.04,6.69,8.45
+SL100243,2024-02-18,ShipHero East / Newark,1002,amazon,Std US D2D Dom,50565,MA,US,5.59,2.94,6.71
+SL100244,2024-03-08,ShipHero East / Newark,1002,amazon,Std US D2D Dom,73912,PA,US,4.92,0.68,5.9
+SL100245,2024-02-28,ShipHero East / Newark,1002,dhl,2Day Air,33811,IL,US,8.16,7.56,9.79
+SL100246,2024-03-26,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,27658,MT,US,15.64,2.37,18.77
+SL100247,2024-03-05,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,45656,VA,US,6.0,3.14,7.2
+SL100248,2024-03-28,ShipHero East / Newark,1002,dhl,Std US D2D Dom,92562,FL,US,14.12,5.26,16.94
+SL100249,2024-03-08,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,46119,DE,US,10.22,8.51,12.26
+SL100250,2024-03-02,ShipHero East / Newark,1002,usps,Std US D2D Dom,65618,TX,US,6.48,2.9,7.78
+SL100251,2024-01-02,ShipHero East / Newark,1002,dhl,Std US D2D Dom,13676,NV,US,12.38,3.4,14.86
+SL100252,2024-02-28,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,70479,NE,US,12.15,4.37,14.58
+SL100253,2024-02-29,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,30141,MT,US,9.24,6.32,11.09
+SL100254,2024-01-24,ShipHero East / Newark,1002,ups,Ground,16578,UT,US,13.34,4.31,16.01
+SL100255,2024-03-09,ShipHero East / Newark,1002,ups,Ground,49265,MN,US,13.65,4.76,16.38
+SL100256,2024-01-04,ShipHero East / Newark,1002,ups,Ground,46250,UT,US,6.65,0.87,7.98
+SL100257,2024-01-16,ShipHero East / Newark,1002,amazon,Priority Mail,74895,NC,US,16.51,9.11,19.81
+SL100258,2024-03-04,ShipHero East / Newark,1002,dhl,Std US D2D Dom,29256,ME,US,8.09,0.93,9.71
+SL100259,2024-03-27,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,77630,LA,US,15.94,7.74,19.13
+SL100260,2024-02-25,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,52945,ND,US,17.39,8.89,20.87
+SL100261,2024-02-01,ShipHero East / Newark,1002,fedex,Priority Mail,97585,UT,US,11.91,3.67,14.29
+SL100262,2024-03-01,ShipHero East / Newark,1002,usps,Priority Mail,15298,MT,US,5.67,1.72,6.8
+SL100263,2024-02-07,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,24550,PA,US,12.2,9.11,14.64
+SL100264,2024-01-17,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,73103,CT,US,16.46,5.39,19.75
+SL100265,2024-01-03,ShipHero East / Newark,1002,amazon,Ground,52322,AK,US,7.18,9.14,8.62
+SL100266,2024-03-30,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,56581,SC,US,8.49,2.89,10.19
+SL100267,2024-02-27,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,73416,DE,US,8.55,6.12,10.26
+SL100268,2024-03-21,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,56266,NC,US,17.24,5.57,20.69
+SL100269,2024-03-30,ShipHero East / Newark,1002,fedex,2Day Air,62988,TN,US,15.27,0.94,18.32
+SL100270,2024-03-29,ShipHero East / Newark,1002,usps,Ground,23209,SC,US,10.35,7.38,12.42
+SL100271,2024-03-21,ShipHero East / Newark,1002,dhl,Std US D2D Dom,30438,TN,US,16.6,4.94,19.92
+SL100272,2024-01-10,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,84761,ID,US,4.33,4.23,5.2
+SL100273,2024-03-27,ShipHero East / Newark,1002,amazon,Priority Mail,92091,MD,US,17.26,3.26,20.71
+SL100274,2024-03-27,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,91069,MI,US,4.71,1.77,5.65
+SL100275,2024-01-06,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,19703,WY,US,5.89,5.61,7.07
+SL100276,2024-01-11,ShipHero East / Newark,1002,dhl,Ground,59344,MT,US,5.93,3.57,7.12
+SL100277,2024-03-08,ShipHero East / Newark,1002,dhl,Std US D2D Dom,59174,MO,US,15.1,1.7,18.12
+SL100278,2024-02-26,ShipHero East / Newark,1002,ups,2Day Air,71734,FL,US,6.32,5.4,7.58
+SL100279,2024-02-21,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,11692,NC,US,17.28,5.06,20.74
+SL100280,2024-03-17,ShipHero East / Newark,1002,amazon,Ground,34908,DE,US,3.55,9.23,4.26
+SL100281,2024-02-03,ShipHero East / Newark,1002,dhl,Ground,53248,DE,US,3.53,6.21,4.24
+SL100282,2024-03-07,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,75861,RI,US,6.01,3.4,7.21
+SL100283,2024-03-03,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,52012,WA,US,14.78,7.41,17.74
+SL100284,2024-02-17,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,71233,KS,US,7.4,1.92,8.88
+SL100285,2024-01-20,ShipHero East / Newark,1002,dhl,Ground,94431,PA,US,8.66,1.66,10.39
+SL100286,2024-01-27,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,51034,NE,US,13.44,6.87,16.13
+SL100287,2024-03-17,ShipHero East / Newark,1002,usps,Priority Mail,80889,WI,US,4.04,6.38,4.85
+SL100288,2024-03-21,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,36043,ME,US,14.07,9.9,16.88
+SL100289,2024-01-28,ShipHero East / Newark,1002,usps,Std US D2D Dom,42971,TN,US,9.31,2.44,11.17
+SL100290,2024-02-25,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,70602,WA,US,14.01,2.48,16.81
+SL100291,2024-03-29,ShipHero East / Newark,1002,fedex,Ground,75450,MO,US,3.69,4.72,4.43
+SL100292,2024-02-14,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,16275,ND,US,9.32,4.46,11.18
+SL100293,2024-02-17,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,66871,MN,US,8.96,5.87,10.75
+SL100294,2024-02-17,ShipHero East / Newark,1002,dhl,Ground,84256,OH,US,4.07,3.33,4.88
+SL100295,2024-02-19,ShipHero East / Newark,1002,ups,Std US D2D Dom,40508,SD,US,7.63,8.8,9.16
+SL100296,2024-02-05,EPIC Warehouse Operations / Lindon,1001,ups,Ground,61798,CT,US,13.45,3.92,16.14
+SL100297,2024-01-03,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,63031,AR,US,17.9,0.91,21.48
+SL100298,2024-01-27,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,82443,NY,US,16.66,1.0,19.99
+SL100299,2024-03-11,ShipHero East / Newark,1002,dhl,2Day Air,29853,WY,US,4.86,3.92,5.83
+SL100300,2024-03-26,ShipHero East / Newark,1002,fedex,Priority Mail,69899,GA,US,14.37,1.2,17.24
+SL100301,2024-03-16,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,98223,CT,US,13.09,1.01,15.71
+SL100302,2024-03-05,ShipHero East / Newark,1002,amazon,Ground,64413,IN,US,9.05,3.55,10.86
+SL100303,2024-01-26,ShipHero East / Newark,1002,fedex,2Day Air,65657,ID,US,10.79,2.63,12.95
+SL100304,2024-03-06,ShipHero East / Newark,1002,ups,Std US D2D Dom,43131,AK,US,9.12,7.09,10.94
+SL100305,2024-02-22,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,84427,IN,US,10.87,2.29,13.04
+SL100306,2024-02-25,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,56916,GA,US,11.36,3.88,13.63
+SL100307,2024-01-03,ShipHero East / Newark,1002,ups,Priority Mail,60443,MS,US,5.26,6.23,6.31
+SL100308,2024-01-09,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,58981,GA,US,8.98,9.29,10.78
+SL100309,2024-01-09,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,86827,OH,US,14.43,9.17,17.32
+SL100310,2024-02-10,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,83311,NC,US,11.56,6.15,13.87
+SL100311,2024-02-06,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,88016,NV,US,4.66,8.98,5.59
+SL100312,2024-03-21,ShipHero East / Newark,1002,dhl,Priority Mail,53090,NY,US,10.01,5.62,12.01
+SL100313,2024-01-16,ShipHero East / Newark,1002,dhl,Std US D2D Dom,94579,PA,US,7.38,2.59,8.86
+SL100314,2024-02-11,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,87043,SD,US,16.41,4.88,19.69
+SL100315,2024-02-19,ShipHero East / Newark,1002,fedex,2Day Air,50949,MI,US,12.46,2.56,14.95
+SL100316,2024-01-09,ShipHero East / Newark,1002,ups,Priority Mail,75290,GA,US,4.66,7.99,5.59
+SL100317,2024-01-23,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,85892,TX,US,5.0,8.21,6.0
+SL100318,2024-03-12,ShipHero East / Newark,1002,usps,Priority Mail,68609,ND,US,14.2,4.28,17.04
+SL100319,2024-01-20,ShipHero East / Newark,1002,ups,Priority Mail,41106,FL,US,12.45,2.18,14.94
+SL100320,2024-03-04,ShipHero East / Newark,1002,usps,Ground,33850,MO,US,7.31,8.78,8.77
+SL100321,2024-01-01,ShipHero East / Newark,1002,ups,Priority Mail,12455,NH,US,9.92,8.7,11.9
+SL100322,2024-03-06,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,47259,NH,US,11.39,9.18,13.67
+SL100323,2024-01-10,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,22390,MN,US,8.64,9.78,10.37
+SL100324,2024-01-15,ShipHero East / Newark,1002,amazon,Std US D2D Dom,70914,LA,US,13.92,2.68,16.7
+SL100325,2024-03-03,ShipHero East / Newark,1002,usps,Std US D2D Dom,76150,OR,US,17.53,9.43,21.04
+SL100326,2024-01-05,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,86129,CT,US,16.95,6.99,20.34
+SL100327,2024-01-21,ShipHero East / Newark,1002,amazon,2Day Air,49158,ME,US,7.39,2.59,8.87
+SL100328,2024-02-06,ShipHero East / Newark,1002,amazon,Ground,29366,MD,US,9.62,4.67,11.54
+SL100329,2024-02-28,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,27881,SD,US,3.52,9.08,4.22
+SL100330,2024-01-13,ShipHero East / Newark,1002,usps,Ground,69941,NV,US,6.52,6.27,7.82
+SL100331,2024-01-16,ShipHero East / Newark,1002,ups,Std US D2D Dom,74157,VT,US,9.51,7.24,11.41
+SL100332,2024-02-25,ShipHero East / Newark,1002,ups,Ground,22850,NV,US,12.96,6.19,15.55
+SL100333,2024-02-22,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,97004,WY,US,12.85,9.06,15.42
+SL100334,2024-03-20,ShipHero East / Newark,1002,dhl,Priority Mail,34378,TN,US,15.28,2.88,18.34
+SL100335,2024-02-25,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,65902,ID,US,17.01,5.68,20.41
+SL100336,2024-02-04,ShipHero East / Newark,1002,amazon,2Day Air,78456,ME,US,7.48,4.91,8.98
+SL100337,2024-03-12,ShipHero East / Newark,1002,dhl,Priority Mail,63578,AK,US,5.31,6.99,6.37
+SL100338,2024-01-04,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,27503,HI,US,10.15,8.83,12.18
+SL100339,2024-03-08,ShipHero East / Newark,1002,fedex,Ground,72861,IL,US,13.83,5.51,16.6
+SL100340,2024-03-04,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,77666,KY,US,7.93,3.88,9.52
+SL100341,2024-03-10,EPIC Warehouse Operations / Lindon,1001,usps,Ground,15588,WI,US,14.09,5.23,16.91
+SL100342,2024-02-05,ShipHero East / Newark,1002,usps,Std US D2D Dom,27440,AZ,US,15.7,7.29,18.84
+SL100343,2024-01-24,ShipHero East / Newark,1002,dhl,Ground,15391,IL,US,14.66,2.94,17.59
+SL100344,2024-02-18,ShipHero East / Newark,1002,ups,2Day Air,86185,MT,US,10.49,5.26,12.59
+SL100345,2024-02-05,ShipHero East / Newark,1002,fedex,Std US D2D Dom,46038,SD,US,16.48,7.02,19.78
+SL100346,2024-03-04,ShipHero East / Newark,1002,amazon,2Day Air,59856,SD,US,4.49,2.08,5.39
+SL100347,2024-01-05,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,85436,LA,US,14.98,2.13,17.98
+SL100348,2024-01-24,ShipHero East / Newark,1002,amazon,2Day Air,68963,HI,US,3.92,3.91,4.7
+SL100349,2024-03-30,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,47819,NJ,US,7.26,5.88,8.71
+SL100350,2024-02-15,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,82073,KY,US,4.69,6.91,5.63
+SL100351,2024-02-21,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,90674,HI,US,15.52,2.86,18.62
+SL100352,2024-02-16,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,55311,ME,US,4.34,1.28,5.21
+SL100353,2024-03-12,ShipHero East / Newark,1002,ups,Std US D2D Dom,79181,WV,US,11.19,9.2,13.43
+SL100354,2024-03-19,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,20047,TX,US,15.31,7.86,18.37
+SL100355,2024-01-30,ShipHero East / Newark,1002,dhl,Priority Mail,11312,NY,US,5.82,2.19,6.98
+SL100356,2024-02-17,ShipHero East / Newark,1002,fedex,Std US D2D Dom,61950,NV,US,8.46,9.75,10.15
+SL100357,2024-03-30,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,35272,WY,US,15.07,0.72,18.08
+SL100358,2024-03-19,ShipHero East / Newark,1002,amazon,Ground,78785,NJ,US,8.15,4.94,9.78
+SL100359,2024-03-30,EPIC Warehouse Operations / Lindon,1001,ups,Ground,71281,SC,US,8.44,4.96,10.13
+SL100360,2024-03-24,ShipHero East / Newark,1002,ups,Ground,81277,VA,US,7.96,5.9,9.55
+SL100361,2024-03-22,ShipHero East / Newark,1002,ups,Ground,28552,ID,US,10.57,4.36,12.68
+SL100362,2024-01-04,ShipHero East / Newark,1002,usps,Std US D2D Dom,11609,MI,US,12.29,0.76,14.75
+SL100363,2024-02-25,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,51092,MN,US,11.56,7.43,13.87
+SL100364,2024-03-31,ShipHero East / Newark,1002,amazon,Std US D2D Dom,12003,WA,US,4.76,9.26,5.71
+SL100365,2024-01-06,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,29683,MA,US,9.98,8.38,11.98
+SL100366,2024-01-24,ShipHero East / Newark,1002,ups,Ground,83699,NH,US,4.88,4.35,5.86
+SL100367,2024-02-20,ShipHero East / Newark,1002,amazon,Ground,41270,ND,US,11.16,3.88,13.39
+SL100368,2024-01-03,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,67898,NY,US,13.99,8.7,16.79
+SL100369,2024-01-18,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,70036,AK,US,11.83,6.55,14.2
+SL100370,2024-03-01,ShipHero East / Newark,1002,dhl,Std US D2D Dom,27376,KY,US,7.86,4.25,9.43
+SL100371,2024-02-24,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,16722,UT,US,6.61,4.24,7.93
+SL100372,2024-03-16,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,88528,CO,US,7.31,5.79,8.77
+SL100373,2024-02-28,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,67512,MN,US,14.75,6.74,17.7
+SL100374,2024-01-12,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,50816,ME,US,5.4,7.25,6.48
+SL100375,2024-03-13,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,33607,MD,US,5.66,7.5,6.79
+SL100376,2024-03-02,EPIC Warehouse Operations / Lindon,1001,ups,Ground,46529,NE,US,13.68,4.16,16.42
+SL100377,2024-03-11,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,44894,CA,US,16.71,8.96,20.05
+SL100378,2024-03-05,ShipHero East / Newark,1002,dhl,Std US D2D Dom,33717,SD,US,14.37,5.9,17.24
+SL100379,2024-03-13,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,79435,NC,US,6.51,3.78,7.81
+SL100380,2024-02-17,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,86463,MO,US,12.52,7.35,15.02
+SL100381,2024-03-19,ShipHero East / Newark,1002,amazon,Priority Mail,33542,RI,US,11.07,3.56,13.28
+SL100382,2024-02-13,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,20870,MS,US,12.6,6.56,15.12
+SL100383,2024-03-24,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,64252,LA,US,4.18,8.36,5.02
+SL100384,2024-03-18,ShipHero East / Newark,1002,amazon,Std US D2D Dom,83856,MA,US,11.18,9.12,13.42
+SL100385,2024-02-21,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,20642,LA,US,15.21,5.54,18.25
+SL100386,2024-03-10,ShipHero East / Newark,1002,fedex,Priority Mail,69292,AR,US,8.9,0.9,10.68
+SL100387,2024-01-07,ShipHero East / Newark,1002,amazon,Ground,36469,VA,US,13.57,4.84,16.28
+SL100388,2024-02-04,ShipHero East / Newark,1002,dhl,Ground,88720,RI,US,16.12,8.88,19.34
+SL100389,2024-02-22,EPIC Warehouse Operations / Lindon,1001,usps,Ground,68804,MT,US,5.47,1.63,6.56
+SL100390,2024-03-15,ShipHero East / Newark,1002,usps,Std US D2D Dom,15689,WA,US,8.88,3.9,10.66
+SL100391,2024-01-15,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,71651,ME,US,10.4,6.98,12.48
+SL100392,2024-03-23,ShipHero East / Newark,1002,fedex,Std US D2D Dom,50897,AL,US,15.07,9.34,18.08
+SL100393,2024-03-07,ShipHero East / Newark,1002,amazon,2Day Air,21265,NC,US,5.2,5.56,6.24
+SL100394,2024-01-22,EPIC Warehouse Operations / Lindon,1001,fedex,Std US D2D Dom,43230,ID,US,8.66,0.67,10.39
+SL100395,2024-03-25,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,39520,AZ,US,9.03,3.38,10.84
+SL100396,2024-01-06,ShipHero East / Newark,1002,fedex,Ground,18363,AL,US,10.25,7.93,12.3
+SL100397,2024-02-23,ShipHero East / Newark,1002,usps,Ground,90567,WY,US,13.54,0.76,16.25
+SL100398,2024-01-02,ShipHero East / Newark,1002,ups,Ground,82932,AK,US,7.79,7.77,9.35
+SL100399,2024-03-24,ShipHero East / Newark,1002,ups,Priority Mail,53031,WY,US,9.32,5.32,11.18
+SL100400,2024-01-11,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,25549,AK,US,6.7,4.23,8.04
+SL100401,2024-02-23,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,45745,NH,US,4.76,8.97,5.71
+SL100402,2024-01-09,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,42112,UT,US,5.88,1.01,7.06
+SL100403,2024-02-18,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,84611,CA,US,8.08,1.0,9.7
+SL100404,2024-01-30,ShipHero East / Newark,1002,fedex,Priority Mail,74249,NV,US,15.39,5.83,18.47
+SL100405,2024-01-28,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,99823,MN,US,4.3,5.8,5.16
+SL100406,2024-02-27,EPIC Warehouse Operations / Lindon,1001,fedex,Priority Mail,92394,FL,US,5.96,3.68,7.15
+SL100407,2024-01-12,ShipHero East / Newark,1002,amazon,2Day Air,61157,WA,US,15.37,9.27,18.44
+SL100408,2024-03-23,ShipHero East / Newark,1002,fedex,Ground,32499,ID,US,16.38,1.26,19.66
+SL100409,2024-01-23,ShipHero East / Newark,1002,fedex,Std US D2D Dom,81830,OK,US,17.17,9.03,20.6
+SL100410,2024-01-29,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,36896,AR,US,10.12,2.02,12.14
+SL100411,2024-02-08,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,74685,OH,US,12.92,3.97,15.5
+SL100412,2024-03-03,ShipHero East / Newark,1002,ups,2Day Air,41595,OK,US,7.71,5.23,9.25
+SL100413,2024-01-22,ShipHero East / Newark,1002,usps,Std US D2D Dom,31127,HI,US,17.94,8.82,21.53
+SL100414,2024-01-10,ShipHero East / Newark,1002,ups,Ground,96594,PA,US,5.83,5.38,7.0
+SL100415,2024-03-27,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,56251,AK,US,11.45,4.58,13.74
+SL100416,2024-02-03,ShipHero East / Newark,1002,amazon,Std US D2D Dom,59333,IL,US,5.73,4.81,6.88
+SL100417,2024-02-07,ShipHero East / Newark,1002,ups,Priority Mail,90329,TN,US,5.77,6.84,6.92
+SL100418,2024-02-09,ShipHero East / Newark,1002,fedex,Std US D2D Dom,78732,AL,US,7.73,2.75,9.28
+SL100419,2024-03-27,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,77321,TN,US,12.03,7.5,14.44
+SL100420,2024-02-22,ShipHero East / Newark,1002,usps,Priority Mail,10188,ID,US,5.93,6.67,7.12
+SL100421,2024-01-31,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,14385,ME,US,6.75,1.46,8.1
+SL100422,2024-03-10,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,51265,IN,US,6.46,1.66,7.75
+SL100423,2024-03-26,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,72735,ND,US,6.22,3.14,7.46
+SL100424,2024-02-14,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,90693,SC,US,15.19,4.58,18.23
+SL100425,2024-02-05,ShipHero East / Newark,1002,fedex,Std US D2D Dom,49920,AZ,US,9.55,7.86,11.46
+SL100426,2024-03-09,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,55680,KY,US,11.13,9.48,13.36
+SL100427,2024-01-09,ShipHero East / Newark,1002,usps,2Day Air,78895,VT,US,3.98,6.96,4.78
+SL100428,2024-03-01,ShipHero East / Newark,1002,usps,Std US D2D Dom,52221,MS,US,15.79,3.65,18.95
+SL100429,2024-03-28,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,13511,MO,US,8.36,4.87,10.03
+SL100430,2024-01-05,ShipHero East / Newark,1002,fedex,Ground,97863,ND,US,11.35,0.98,13.62
+SL100431,2024-01-05,ShipHero East / Newark,1002,dhl,Ground,75702,KS,US,15.43,1.33,18.52
+SL100432,2024-02-18,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,29150,VA,US,5.51,2.78,6.61
+SL100433,2024-01-20,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,92060,WV,US,4.87,5.04,5.84
+SL100434,2024-02-18,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,46684,NV,US,15.9,4.8,19.08
+SL100435,2024-01-29,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,13677,SD,US,9.7,3.62,11.64
+SL100436,2024-02-06,ShipHero East / Newark,1002,usps,Priority Mail,85496,NC,US,17.02,6.19,20.42
+SL100437,2024-01-09,EPIC Warehouse Operations / Lindon,1001,dhl,Std US D2D Dom,32219,AR,US,12.05,4.83,14.46
+SL100438,2024-03-21,ShipHero East / Newark,1002,usps,Ground,52581,AL,US,16.24,7.26,19.49
+SL100439,2024-02-17,EPIC Warehouse Operations / Lindon,1001,ups,Std US D2D Dom,71511,CA,US,15.69,1.7,18.83
+SL100440,2024-02-13,ShipHero East / Newark,1002,fedex,Priority Mail,43525,MI,US,4.02,4.24,4.82
+SL100441,2024-01-16,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,61845,RI,US,16.88,3.18,20.26
+SL100442,2024-03-26,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,45102,MN,US,8.92,1.06,10.7
+SL100443,2024-03-24,ShipHero East / Newark,1002,dhl,2Day Air,48493,WV,US,7.11,4.46,8.53
+SL100444,2024-03-09,ShipHero East / Newark,1002,dhl,Ground,40174,MD,US,5.43,9.23,6.52
+SL100445,2024-01-03,ShipHero East / Newark,1002,fedex,Priority Mail,56359,MD,US,12.9,2.19,15.48
+SL100446,2024-01-20,ShipHero East / Newark,1002,usps,Std US D2D Dom,34327,KS,US,16.3,2.7,19.56
+SL100447,2024-03-25,ShipHero East / Newark,1002,usps,2Day Air,90190,WI,US,6.58,0.84,7.9
+SL100448,2024-02-29,ShipHero East / Newark,1002,usps,Priority Mail,10813,SC,US,8.5,1.81,10.2
+SL100449,2024-01-10,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,72697,AR,US,4.4,3.41,5.28
+SL100450,2024-01-09,ShipHero East / Newark,1002,fedex,Priority Mail,71293,SD,US,17.68,9.37,21.22
+SL100451,2024-02-27,ShipHero East / Newark,1002,ups,Std US D2D Dom,54580,WI,US,11.02,5.21,13.22
+SL100452,2024-01-28,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,52233,TX,US,12.22,9.27,14.66
+SL100453,2024-03-05,ShipHero East / Newark,1002,ups,Priority Mail,31368,FL,US,8.56,3.4,10.27
+SL100454,2024-02-28,ShipHero East / Newark,1002,ups,Ground,21176,CA,US,8.63,5.34,10.36
+SL100455,2024-03-24,ShipHero East / Newark,1002,dhl,Ground,95039,SD,US,14.31,2.33,17.17
+SL100456,2024-03-24,EPIC Warehouse Operations / Lindon,1001,dhl,Priority Mail,20325,TN,US,17.52,2.7,21.02
+SL100457,2024-03-03,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,36774,AL,US,17.45,8.11,20.94
+SL100458,2024-02-19,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,39371,VT,US,17.33,9.55,20.8
+SL100459,2024-02-08,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,55765,FL,US,13.18,3.54,15.82
+SL100460,2024-02-14,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,80752,IN,US,3.64,8.63,4.37
+SL100461,2024-03-12,EPIC Warehouse Operations / Lindon,1001,usps,Ground,76843,MT,US,15.9,1.61,19.08
+SL100462,2024-02-13,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,87715,TX,US,13.13,2.58,15.76
+SL100463,2024-02-18,EPIC Warehouse Operations / Lindon,1001,fedex,2Day Air,26333,FL,US,15.51,3.9,18.61
+SL100464,2024-01-02,ShipHero East / Newark,1002,fedex,2Day Air,34665,MN,US,4.34,1.32,5.21
+SL100465,2024-03-29,EPIC Warehouse Operations / Lindon,1001,usps,2Day Air,80355,AK,US,12.59,3.75,15.11
+SL100466,2024-03-23,ShipHero East / Newark,1002,usps,Ground,77498,MN,US,13.56,4.95,16.27
+SL100467,2024-03-07,ShipHero East / Newark,1002,fedex,Std US D2D Dom,36788,NC,US,8.36,3.57,10.03
+SL100468,2024-01-26,ShipHero East / Newark,1002,fedex,Ground,22185,MO,US,16.59,6.99,19.91
+SL100469,2024-03-30,EPIC Warehouse Operations / Lindon,1001,amazon,Std US D2D Dom,15949,MI,US,15.62,6.78,18.74
+SL100470,2024-02-12,EPIC Warehouse Operations / Lindon,1001,fedex,Ground,96001,MO,US,4.87,2.7,5.84
+SL100471,2024-01-25,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,17238,FL,US,5.35,0.92,6.42
+SL100472,2024-03-01,ShipHero East / Newark,1002,usps,Std US D2D Dom,63628,MI,US,6.1,7.15,7.32
+SL100473,2024-01-26,ShipHero East / Newark,1002,fedex,Priority Mail,84308,NV,US,17.2,9.0,20.64
+SL100474,2024-03-17,EPIC Warehouse Operations / Lindon,1001,ups,2Day Air,76214,VA,US,5.88,9.37,7.06
+SL100475,2024-03-21,EPIC Warehouse Operations / Lindon,1001,ups,Ground,80232,RI,US,5.72,8.01,6.86
+SL100476,2024-03-12,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,19842,CO,US,16.22,4.77,19.46
+SL100477,2024-02-25,EPIC Warehouse Operations / Lindon,1001,amazon,Ground,26732,NY,US,7.01,1.29,8.41
+SL100478,2024-01-25,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,67165,NE,US,11.4,9.42,13.68
+SL100479,2024-02-26,ShipHero East / Newark,1002,ups,Ground,93947,CO,US,14.65,2.99,17.58
+SL100480,2024-01-06,ShipHero East / Newark,1002,usps,Ground,79628,RI,US,17.82,9.28,21.38
+SL100481,2024-02-17,ShipHero East / Newark,1002,amazon,2Day Air,95756,NE,US,17.19,7.56,20.63
+SL100482,2024-03-08,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,13095,HI,US,11.71,2.83,14.05
+SL100483,2024-01-09,EPIC Warehouse Operations / Lindon,1001,usps,Ground,67987,VA,US,10.28,3.61,12.34
+SL100484,2024-03-18,EPIC Warehouse Operations / Lindon,1001,usps,Std US D2D Dom,37613,ND,US,16.21,3.19,19.45
+SL100485,2024-01-13,EPIC Warehouse Operations / Lindon,1001,amazon,2Day Air,26119,ID,US,4.7,0.77,5.64
+SL100486,2024-02-15,EPIC Warehouse Operations / Lindon,1001,usps,Ground,50431,OK,US,17.32,6.1,20.78
+SL100487,2024-02-14,ShipHero East / Newark,1002,ups,Ground,72191,AL,US,7.47,7.3,8.96
+SL100488,2024-03-25,EPIC Warehouse Operations / Lindon,1001,dhl,2Day Air,69733,HI,US,8.26,3.37,9.91
+SL100489,2024-03-21,EPIC Warehouse Operations / Lindon,1001,amazon,Priority Mail,28956,IL,US,12.97,4.81,15.56
+SL100490,2024-02-08,ShipHero East / Newark,1002,amazon,Priority Mail,47672,MO,US,10.5,0.61,12.6
+SL100491,2024-02-05,EPIC Warehouse Operations / Lindon,1001,dhl,Ground,86429,AK,US,13.55,7.86,16.26
+SL100492,2024-01-04,ShipHero East / Newark,1002,dhl,2Day Air,24758,NE,US,17.85,6.12,21.42
+SL100493,2024-02-08,ShipHero East / Newark,1002,ups,Ground,58817,MD,US,11.11,8.23,13.33
+SL100494,2024-02-01,ShipHero East / Newark,1002,usps,2Day Air,64936,MN,US,14.26,3.83,17.11
+SL100495,2024-01-06,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,64364,NH,US,5.41,8.83,6.49
+SL100496,2024-02-26,ShipHero East / Newark,1002,usps,Priority Mail,22236,MN,US,4.17,5.58,5.0
+SL100497,2024-02-15,EPIC Warehouse Operations / Lindon,1001,ups,Priority Mail,56932,RI,US,15.39,1.85,18.47
+SL100498,2024-01-09,EPIC Warehouse Operations / Lindon,1001,usps,Priority Mail,43389,AZ,US,14.73,0.95,17.68
+SL100499,2024-02-09,ShipHero East / Newark,1002,ups,Ground,88102,MA,US,14.6,2.83,17.52
