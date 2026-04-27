@@ -168,6 +168,62 @@ export function parseItemLocationsCSV(file: File): Promise<ItemLocationRow[]> {
   });
 }
 
+// ─── Product Catalog ──────────────────────────────────────────────────────────
+// Parses ShipHero's product/inventory export (Name, SKU, On Hand, 3PL Customer,
+// Price, Value columns). Used for the Carry Cost % of Revenue calculation.
+
+export interface ProductCatalogRow {
+  name: string;
+  sku: string;
+  client: string;
+  warehouse: string;
+  onHand: number;
+  available: number;
+  allocated: number;
+  onOrder: number;
+  price: number;       // selling price per unit
+  unitCost: number;    // COGS per unit ("Value" column)
+  weightLb: number;
+  virtual: boolean;
+  active: boolean;
+}
+
+export function parseProductCatalogCSV(file: File): Promise<ProductCatalogRow[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: normalizeHeader,
+      complete: (results) => {
+        try {
+          const rows = results.data.map((r): ProductCatalogRow => {
+            const get = makeGet(r);
+            return {
+              name:      get('name', 'item_name', 'product_name', 'item'),
+              sku:       get('sku', 'item_sku', 'sku_id'),
+              client:    get('3pl_customer', 'threepl_name', 'threepl_customer', 'client', 'client_name', 'account'),
+              warehouse: get('warehouse', 'warehouse_name'),
+              onHand:    num(get('on_hand', 'onhand', 'quantity_on_hand', 'qty_on_hand')),
+              available: num(get('available', 'available_qty', 'qty_available')),
+              allocated: num(get('allocated', 'qty_allocated')),
+              onOrder:   num(get('on_order', 'on_order_qty')),
+              price:     num(get('price', 'selling_price', 'retail_price', 'unit_price')),
+              unitCost:  num(get('value', 'unit_cost', 'cost', 'cogs')),
+              weightLb:  num(get('weight_(lb)', 'weight_lb', 'weight', 'weight_(lbs)')),
+              virtual:   bool(get('virtual', 'is_virtual')),
+              active:    bool(get('active', 'is_active')) || get('active', 'is_active') === '',
+            };
+          });
+          resolve(rows.filter(r => r.sku !== '' && !r.virtual));
+        } catch (err) {
+          reject(err);
+        }
+      },
+      error: reject,
+    });
+  });
+}
+
 export function parseInventoryChangeCSV(file: File): Promise<InventoryChangeRow[]> {
   return new Promise((resolve, reject) => {
     Papa.parse<Record<string, string>>(file, {

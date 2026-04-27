@@ -120,16 +120,20 @@ function Section({
 
 // ─── KPI tile ─────────────────────────────────────────────────────────────────
 function KPITile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  // Scale down the value font size for long strings so numbers never overflow
+  const valueFontSize = value.length > 10 ? 16 : value.length > 7 ? 19 : 22;
   return (
     <div style={{
-      flex: '1 1 0', minWidth: 120,
       padding: '16px 18px',
       borderRadius: 8,
       border: `1px solid ${BORDER}`,
       background: '#fff',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
     }}>
       <div style={{ fontSize: 10, fontWeight: 600, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: NAVY, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: valueFontSize, fontWeight: 700, color: NAVY, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: GRAY, marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -418,7 +422,7 @@ export default function FollowUpDocument() {
               {/* ── 3. Key metrics ────────────────────────────────────────── */}
               {kpis && (
                 <Section title="Key Metrics">
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                     <KPITile
                       label="Total Shipments"
                       value={num(kpis.totalShipments)}

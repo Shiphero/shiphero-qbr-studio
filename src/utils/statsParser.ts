@@ -5,6 +5,7 @@ export interface MonthlyStatRow {
   accountId: string;
   accountName: string;
   childAccountId: string;
+  childAccountName: string;  // display name for the child account (may be empty)
   warehouseId: string;
   labelCount: number;
   orderCount: number;
@@ -49,6 +50,7 @@ export function parseStatsCSV(file: File): Promise<MonthlyStatRow[]> {
             accountId: r['account id'] || '',
             accountName: r['account name'] || '',
             childAccountId: r['child account id'] || '',
+            childAccountName: r['child account name'] || r['child_account_name'] || '',
             warehouseId: r['warehouse id'] || '',
             labelCount: num(r['label count']),
             orderCount: num(r['order count']),

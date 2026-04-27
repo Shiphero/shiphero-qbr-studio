@@ -32,7 +32,7 @@ export default function SetupTab({ onNavigate }: Props) {
     priorPeriod, uploadPriorCSV,
     setPendingStatsFile, setPendingLocFile, setPendingChangeFiles,
   } = useData();
-  const { locLoaded } = usePDF();
+  const { locLoaded, inventoryData } = usePDF();
   const { log } = useAudit();
 
   const logoRef      = useRef<HTMLInputElement>(null);
@@ -242,7 +242,7 @@ export default function SetupTab({ onNavigate }: Props) {
             { label: "Prior Quarter's Shipments", path: 'Same as Shipments Report — prior period',                  done: hasPrior,                 required: false, doneLabel: priorPeriod?.fileName },
             { label: 'QuickSight CSS_5_Insights', path: 'ShipHero QuickSight → CSS_5_Insights export',              done: statsLoaded,              required: false, doneLabel: statsLoaded ? 'Loaded' : undefined },
             { label: 'Product Locations CSV',     path: 'ShipHero → Reports → Product Locations',                   done: hasInventory,             required: false, doneLabel: hasInventory ? 'Loaded' : undefined },
-            { label: 'Inventory Changes CSV',     path: 'ShipHero → Reports → Inventory Changes (one per warehouse)', done: changeFilesLocal.length > 0, required: false, doneLabel: changeFilesLocal.length > 0 ? `${changeFilesLocal.length} file${changeFilesLocal.length > 1 ? 's' : ''}` : undefined },
+            { label: 'Inventory Changes CSV',     path: 'ShipHero → Reports → Inventory Changes (one per warehouse)', done: changeFilesLocal.length > 0 || (inventoryData?.changeFileEntries?.length ?? 0) > 0, required: false, doneLabel: changeFilesLocal.length > 0 ? `${changeFilesLocal.length} file${changeFilesLocal.length > 1 ? 's' : ''}` : (inventoryData?.changeFileEntries?.length ?? 0) > 0 ? `${inventoryData!.changeFileEntries!.length} file${inventoryData!.changeFileEntries!.length > 1 ? 's' : ''}` : undefined },
           ].map((item, i, arr) => (
             <div
               key={item.label}

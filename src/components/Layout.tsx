@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import ShippingTab from './ShippingTab';
 import InventoryHealthTab from './InventoryHealthTab';
 import Dashboard from './Dashboard';
@@ -86,6 +86,7 @@ export default function Layout({ user, onLogout, onProfileUpdate }: LayoutProps)
     cashId, cachedAt,
     sessionActive, sessions, deleteSession, goHome, resumeSession,
     exportSessionBundle, importSessionBundle,
+    pendingDeckRestore, consumePendingDeckRestore,
   } = useData();
   const { applyImportedDeckState } = useDeck();
   const { clearInventoryData } = usePDF();
@@ -108,6 +109,13 @@ export default function Layout({ user, onLogout, onProfileUpdate }: LayoutProps)
     if (bundle.deckState) applyImportedDeckState(bundle.deckState);
     setActiveStep('setup');
   };
+
+  // Restore deck state (insights, narratives, slide config) when switching sessions
+  useEffect(() => {
+    if (!pendingDeckRestore) return;
+    applyImportedDeckState(pendingDeckRestore);
+    consumePendingDeckRestore();
+  }, [pendingDeckRestore]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNavigate = (target: string) => {
     switch (target) {

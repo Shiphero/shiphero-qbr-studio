@@ -301,7 +301,7 @@ function SlideContent({ sectionKey, data, W, H }: {
       const allMonths = new Set<string>();
       const byAcct = new Map<string, Map<string, number>>();
       for (const r of data.statsRows) {
-        const name = r.accountName || r.accountId;
+        const name = r.childAccountName || r.childAccountId || r.accountName || r.accountId;
         if (!byAcct.has(name)) byAcct.set(name, new Map());
         byAcct.get(name)!.set(r.month, (byAcct.get(name)!.get(r.month) ?? 0) + r.orderCount);
         allMonths.add(r.month);
@@ -470,7 +470,7 @@ function SlideContent({ sectionKey, data, W, H }: {
     case 'childAccountScorecard': {
       const accts = new Map<string, { orders: number; labels: number; spend: number }>();
       for (const r of data.statsRows) {
-        const n = r.accountName || r.accountId;
+        const n = r.childAccountName || r.childAccountId || r.accountName || r.accountId;
         const ex = accts.get(n) ?? { orders: 0, labels: 0, spend: 0 };
         accts.set(n, { orders: ex.orders + r.orderCount, labels: ex.labels + r.labelCount, spend: ex.spend + r.carrierSpend });
       }

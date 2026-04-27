@@ -4,6 +4,7 @@ import type { MonthlyStatRow } from './statsParser';
 import { dedupeWarehouseRows, formatMonth } from './statsParser';
 import shipheroWhiteUrl from '../assets/logos/shiphero-white.png';
 import { getIconDataUrl } from './deckIcons';
+import { COVER_COLOR_SCHEMES } from '../components/QBRDeckBuilder';
 
 // ── Brand palette (no '#') ─────────────────────────────────────────────────────
 const C = {
@@ -329,18 +330,29 @@ function addCallout(
 function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: number) {
   const slide = pptx.addSlide();
 
+  // Resolve color scheme (strip '#' for pptxgenjs)
+  const scheme    = COVER_COLOR_SCHEMES.find(s => s.id === props.coverColorScheme) ?? COVER_COLOR_SCHEMES[0];
+  const bgHex     = scheme.bg.replace('#', '');
+  const accentHex = scheme.accent.replace('#', '');
+  // On light backgrounds (white) use dark text; otherwise use white text
+  const textHex   = scheme.darkText ? C.NAVY : C.WHITE;
+  const subTextHex = scheme.darkText ? '6B7280' : 'AAAAAA';
+  const frameStroke = scheme.darkText ? '25252520' : 'FFFFFF12';
+  const frameFill   = scheme.darkText ? '25252506' : 'FFFFFF06';
+  const dividerColor = scheme.darkText ? '25252530' : 'FFFFFF20';
+
   if (props.coverPhoto) {
     slide.addImage({ data: props.coverPhoto, x: 0, y: 0, w: W, h: H, sizing: { type: 'cover', w: W, h: H } });
-    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.NAVY + 'CC' } as PptxGenJS.ShapeFillProps, line: { color: C.NAVY + '00' } });
+    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex + 'CC' } as PptxGenJS.ShapeFillProps, line: { color: bgHex + '00' } });
   } else {
-    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.NAVY }, line: { color: C.NAVY } });
+    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex }, line: { color: bgHex } });
   }
 
-  // Top orange accent bar
-  slide.addShape('rect', { x: 0, y: 0, w: W, h: 0.06, fill: { color: C.ORANGE }, line: { color: C.ORANGE } });
+  // Top accent bar
+  slide.addShape('rect', { x: 0, y: 0, w: W, h: 0.06, fill: { color: accentHex }, line: { color: accentHex } });
 
-  // Bottom orange accent bar (subtle)
-  slide.addShape('rect', { x: 0, y: H - 0.04, w: W, h: 0.04, fill: { color: C.ORANGE + '55' } as PptxGenJS.ShapeFillProps, line: { color: C.ORANGE + '55' } });
+  // Bottom accent bar (subtle)
+  slide.addShape('rect', { x: 0, y: H - 0.04, w: W, h: 0.04, fill: { color: accentHex + '55' } as PptxGenJS.ShapeFillProps, line: { color: accentHex + '55' } });
 
   // ── Logo row (centered, framed box) ────────────────────────────────────────
   // ShipHero white logo: 320×84 → aspect 3.81:1
@@ -356,21 +368,19 @@ function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: numb
   // Frame background + border
   slide.addShape('rect', {
     x: BOX_X, y: BOX_Y, w: BOX_W, h: BOX_H,
-    fill: { color: 'FFFFFF06' } as PptxGenJS.ShapeFillProps,
-    line: { color: 'FFFFFF12', width: 0.75 },
+    fill: { color: frameFill } as PptxGenJS.ShapeFillProps,
+    line: { color: frameStroke, width: 0.75 },
     rectRadius: 0.12,
   });
 
-  // ShipHero logo — left half of box, vertically centered
-  const shLogoX = BOX_X + (BOX_W / 2 - shW) / 2;   // centered in left half
-  const shLogoY = BOX_Y + (BOX_H - shH) / 2;
-  slide.addImage({ path: shipheroWhiteUrl, x: shLogoX, y: shLogoY, w: shW, h: shH });
+  // ShipHero logo — use white version on dark bg, colored version on white bg
+  slide.addImage({ path: shipheroWhiteUrl, x: BOX_X + (BOX_W / 2 - shW) / 2, y: BOX_Y + (BOX_H - shH) / 2, w: shW, h: shH });
 
   // Vertical divider between logos
   const divX = BOX_X + BOX_W / 2;
   slide.addShape('line', {
     x: divX, y: BOX_Y + 0.18, w: 0, h: BOX_H - 0.36,
-    line: { color: 'FFFFFF20', width: 0.75 },
+    line: { color: dividerColor, width: 0.75 },
   });
 
   // Client logo — right half of box
@@ -392,7 +402,7 @@ function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: numb
     // Fallback: brand name text
     slide.addText((props.clientName || 'CLIENT').toUpperCase(), {
       x: LOGO_X, y: LOGO_Y, w: LOGO_W, h: LOGO_H,
-      fontSize: 16, bold: true, color: C.WHITE,
+      fontSize: 16, bold: true, color: textHex,
       align: 'center', valign: 'middle', charSpacing: 1.5,
     });
   }
@@ -402,39 +412,39 @@ function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: numb
   const clientNameFontSize = props.fontOption === 'A' ? 26 : props.fontOption === 'C' ? 36 : 31;
   slide.addText(props.clientName || 'Client', {
     x: 1, y: nameY, w: W - 2, h: 0.72,
-    fontSize: clientNameFontSize, bold: true, color: C.WHITE,
+    fontSize: clientNameFontSize, bold: true, color: textHex,
     align: 'center', valign: 'middle',
   });
 
-  // Orange underline — centered
+  // Accent underline — centered
   const barW = 0.85;
   slide.addShape('rect', {
     x: (W - barW) / 2, y: nameY + 0.74, w: barW, h: 0.055,
-    fill: { color: C.ORANGE }, line: { color: C.ORANGE },
+    fill: { color: accentHex }, line: { color: accentHex },
   });
 
   // QBR label
   slide.addText('QUARTERLY BUSINESS REVIEW', {
     x: 1, y: nameY + 0.84, w: W - 2, h: 0.26,
-    fontSize: 8.5, bold: true, color: 'AAAAAA', charSpacing: 2, align: 'center',
+    fontSize: 8.5, bold: true, color: subTextHex, charSpacing: 2, align: 'center',
   });
 
   // Reporting period
   if (props.reportingPeriod) {
     slide.addText(props.reportingPeriod, {
       x: 1, y: nameY + 1.13, w: W - 2, h: 0.28,
-      fontSize: 13, bold: true, color: C.ORANGE, align: 'center',
+      fontSize: 13, bold: true, color: accentHex, align: 'center',
     });
   }
 
   // ── Bottom bar ──────────────────────────────────────────────────────────────
   slide.addText(props.reportDate.toUpperCase(), {
     x: 0.45, y: H - 0.32, w: 3.5, h: 0.2,
-    fontSize: 7.5, bold: true, color: C.BLUE, charSpacing: 1.5,
+    fontSize: 7.5, bold: true, color: scheme.darkText ? C.NAVY : C.BLUE, charSpacing: 1.5,
   });
   slide.addText('Confidential — ShipHero', {
     x: W - 3.5, y: H - 0.32, w: 3.0, h: 0.2,
-    fontSize: 7, color: '55657A', align: 'right',
+    fontSize: 7, color: subTextHex, align: 'right',
   });
 }
 
@@ -1169,9 +1179,10 @@ function buildChildAccountTrendsSlide(pptx: PptxGenJS, rows: MonthlyStatRow[], s
   const { allMonths: rawMonths2 } = computeMonthlyTotals(rows);
 
   // Top 6 children by total orders
-  const childMap = new Map<string, { orders: Record<string, number>; total: number }>();
+  const childMap = new Map<string, { name: string; orders: Record<string, number>; total: number }>();
   for (const r of rows) {
-    const ex = childMap.get(r.childAccountId) ?? { orders: {}, total: 0 };
+    const ex = childMap.get(r.childAccountId) ?? { name: '', orders: {}, total: 0 };
+    if (!ex.name && r.childAccountName) ex.name = r.childAccountName;
     ex.orders[r.month] = (ex.orders[r.month] ?? 0) + r.orderCount;
     ex.total += r.orderCount;
     childMap.set(r.childAccountId, ex);
@@ -1183,7 +1194,7 @@ function buildChildAccountTrendsSlide(pptx: PptxGenJS, rows: MonthlyStatRow[], s
   const CHART_COLORS = [C.BLUE, C.ORANGE, '22C55E', '8B5CF6', '06B6D4', 'F97316'];
 
   const chartData = top6.map(([id, data], i) => ({
-    name: `#${id}`,
+    name: data.name || id,
     labels,
     values: allMonths.map(m => data.orders[m] ?? 0),
     chartColor: CHART_COLORS[i % CHART_COLORS.length],

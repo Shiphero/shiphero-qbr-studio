@@ -126,6 +126,10 @@ interface DataContextValue {
   recordDeckExport: (slideCount: number) => void;
   exportSessionBundle: () => void;
   importSessionBundle: (bundle: SessionBundle) => Promise<void>;
+
+  /** Deck state string to restore after a session switch; null once consumed */
+  pendingDeckRestore: string | null;
+  consumePendingDeckRestore: () => void;
 }
 
 const defaultFilters: FilterState = {
@@ -194,6 +198,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [pendingChangeFiles, setPendingChangeFilesState] = useState<File[]>([]);
   const [statsRows, setStatsRowsState] = useState<MonthlyStatRow[]>([]);
   const [statsFileName, setStatsFileNameState] = useState<string | null>(null);
+  const [pendingDeckRestore, setPendingDeckRestore] = useState<string | null>(null);
 
   // ── Restore on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -300,6 +305,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         statsRows,
         statsFileName,
         savedAt: new Date().toISOString(),
+        deckState: localStorage.getItem('shiphero_deck_v1') ?? undefined,
       });
     }, 500);
     return () => { if (idbSaveTimer.current) clearTimeout(idbSaveTimer.current); };
@@ -323,6 +329,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         statsRows,
         statsFileName,
         savedAt: new Date().toISOString(),
+        deckState: localStorage.getItem('shiphero_deck_v1') ?? undefined,
       });
     };
     window.addEventListener('beforeunload', flush);
@@ -564,6 +571,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setStatsFileNameState(idb.statsFileName ?? null);
         setStatsLoadedState(true);
       }
+      // Restore deck state (insights, narratives, slide config) for this session
+      if (idb.deckState) setPendingDeckRestore(idb.deckState);
     });
   }, []);
 
@@ -862,6 +871,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     recordDeckExport,
     exportSessionBundle,
     importSessionBundle,
+    pendingDeckRestore,
+    consumePendingDeckRestore: () => setPendingDeckRestore(null),
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

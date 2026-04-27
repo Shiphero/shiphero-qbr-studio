@@ -27,6 +27,8 @@ export interface PerSessionData {
   statsRows: MonthlyStatRow[];
   statsFileName: string | null;
   savedAt: string;
+  /** Serialised DeckContext state — sections (with insight/narrative), dataInstances, execSummary */
+  deckState?: string;
 }
 
 export interface PerSessionInventory {

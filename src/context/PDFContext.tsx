@@ -90,14 +90,32 @@ export function PDFProvider({ children }: { children: React.ReactNode }) {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       saveInventoryToDB(currentSessionId, inventoryData);
-    }, 2000);
+    }, 500);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [currentSessionId, inventoryData]);
+
+  // ── Flush on page close so debounce never eats the last write ────────────
+  useEffect(() => {
+    const flush = () => {
+      if (!currentSessionId || !inventoryData) return;
+      if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null; }
+      saveInventoryToDB(currentSessionId, inventoryData);
+    };
+    window.addEventListener('beforeunload', flush);
+    return () => window.removeEventListener('beforeunload', flush);
   }, [currentSessionId, inventoryData]);
 
   // ── API ───────────────────────────────────────────────────────────────────
   const registerInventoryData = useCallback((data: InventoryPDFData) => {
     setInventoryData(data);
-  }, []);
+    // Write to IDB immediately — don't rely on the debounce timer.
+    // The debounce effect will also fire after state settles, but the
+    // immediate write ensures data survives a fast refresh (< 500 ms).
+    if (currentSessionId) {
+      if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null; }
+      saveInventoryToDB(currentSessionId, data);
+    }
+  }, [currentSessionId]);
 
   const clearInventoryData = useCallback(() => {
     setInventoryData(null);

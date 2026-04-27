@@ -6,8 +6,10 @@ import {
 import {
   parseItemLocationsCSV,
   parseInventoryChangeCSV,
+  parseProductCatalogCSV,
   ItemLocationRow,
   InventoryChangeRow,
+  ProductCatalogRow,
   ChangeCategory,
   normalizeReason,
 } from '../utils/inventoryParser';
@@ -45,6 +47,10 @@ function fmtBig(n: number) {
   if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toLocaleString();
 }
+function fmtDollar(n: number) {
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtPct(n: number) { return n.toFixed(1) + '%'; }
 
 type ExpiryTier = 'critical' | 'warning' | 'watch' | 'ok';
 
@@ -78,6 +84,28 @@ function dohStatus(days: number | null): DOHStatus {
   if (days < 180) return 'ok';
   return 'overstocked';
 }
+
+type CarryStatus = 'red' | 'yellow' | 'green' | 'no-revenue';
+const CARRY_CFG: Record<CarryStatus, { label: string; bg: string; text: string; border: string }> = {
+  'red':        { label: '🔴 High Risk', bg: 'rgba(239,68,68,0.08)',  text: '#b91c1c', border: 'rgba(239,68,68,0.3)' },
+  'yellow':     { label: '🟡 Watch',     bg: 'rgba(245,166,35,0.1)',  text: '#92650a', border: 'rgba(245,166,35,0.3)' },
+  'green':      { label: '✓ Healthy',   bg: 'rgba(34,197,94,0.1)',   text: '#15803D', border: 'rgba(34,197,94,0.3)' },
+  'no-revenue': { label: '— No Sales',  bg: '#F5F5F0',               text: '#6B7280', border: '#E5E7EB' },
+};
+
+function carryStatus(pct: number | null, redT: number, yellowT: number): CarryStatus {
+  if (pct === null) return 'no-revenue';
+  if (pct > redT) return 'red';
+  if (pct > yellowT) return 'yellow';
+  return 'green';
+}
+
+type CarryCostRow = {
+  client: string; sku: string; name: string;
+  unitsSold: number; totalRevenue: number;
+  avgUnitsInStorage: number; totalStorageFees: number;
+  carryCostPct: number | null; status: CarryStatus;
+};
 
 type SortDir = 'asc' | 'desc';
 
@@ -203,6 +231,20 @@ export default function InventoryHealthTab() {
   const [adjSortDir, setAdjSortDir] = useState<SortDir>('desc');
   const [adjCategoryFilter, setAdjCategoryFilter] = useState<Set<string>>(() => new Set(['Manual Adjustment']));
 
+  // ── Carry Cost section ────────────────────────────────────────────────────
+  const [productRows,       setProductRows]       = useState<ProductCatalogRow[]>([]);
+  const [productFile,       setProductFile]       = useState<string | null>(null);
+  const [productLoading,    setProductLoading]    = useState(false);
+  const [productError,      setProductError]      = useState<string | null>(null);
+  const [storageRate,       setStorageRate]       = useState(0.50);   // $/unit/month
+  const [redThreshold,      setRedThreshold]      = useState(30);
+  const [yellowThreshold,   setYellowThreshold]   = useState(15);
+  const [carryExpanded,     setCarryExpanded]     = useState(false);
+  const [carrySortKey,      setCarrySortKey]      = useState('carryCostPct');
+  const [carrySortDir,      setCarrySortDir]      = useState<SortDir>('desc');
+  const [carryInternalOnly, setCarryInternalOnly] = useState(false);
+  const productFileRef = useRef<HTMLInputElement>(null);
+
   const handleTableSort = useCallback((
     col: string, key: string, setKey: (k: string) => void,
     dir: SortDir, setDir: (d: SortDir) => void
@@ -297,6 +339,16 @@ export default function InventoryHealthTab() {
     setChangeFiles(prev => prev.filter(f => f.id !== id));
   }, []);
 
+  const handleProductFile = useCallback(async (file: File) => {
+    setProductError(null); setProductLoading(true);
+    try {
+      const parsed = await parseProductCatalogCSV(file);
+      setProductRows(parsed); setProductFile(file.name);
+    } catch (err) {
+      setProductError(err instanceof Error ? err.message : 'Failed to parse file');
+    } finally { setProductLoading(false); }
+  }, []);
+
   // ── KPIs from Item Locations ──────────────────────────────────────────────
   const locKPIs = useMemo(() => {
     if (!hasLocData) return null;
@@ -338,6 +390,51 @@ export default function InventoryHealthTab() {
     );
     return { min, max, periodDays };
   }, [changeRows, hasChangeData]);
+
+  // ── Carry Cost rows (needs dateRange, so declared here) ───────────────────
+  const carryCostRows = useMemo((): CarryCostRow[] => {
+    if (productRows.length === 0) return [];
+
+    const outboundMap = new Map<string, number>();
+    for (const r of changeRows) {
+      if (r.unitDelta >= 0) continue;
+      if (!['DTC Order', 'B2B / Wholesale'].includes(r.reasonCategory)) continue;
+      const key = `${r.client}::${r.sku}`;
+      outboundMap.set(key, (outboundMap.get(key) ?? 0) + Math.abs(r.unitDelta));
+    }
+
+    const periodMonths = dateRange ? Math.max(dateRange.periodDays / 30, 0.5) : 1;
+
+    return productRows
+      .filter(r => r.active && r.price > 0)
+      .map(r => {
+        const key           = `${r.client}::${r.sku}`;
+        const unitsSold     = outboundMap.get(key) ?? 0;
+        const totalRevenue  = unitsSold * r.price;
+        const avgUnitsInStorage = r.onHand;
+        const totalStorageFees  = avgUnitsInStorage * storageRate * periodMonths;
+        const carryCostPct  = totalRevenue > 0 ? (totalStorageFees / totalRevenue) * 100 : null;
+        return {
+          client: r.client, sku: r.sku, name: r.name,
+          unitsSold, totalRevenue, avgUnitsInStorage, totalStorageFees,
+          carryCostPct,
+          status: carryStatus(carryCostPct, redThreshold, yellowThreshold),
+        };
+      });
+  }, [productRows, changeRows, storageRate, dateRange, redThreshold, yellowThreshold]);
+
+  const carryKPIs = useMemo(() => {
+    if (carryCostRows.length === 0) return null;
+    const redSkus     = carryCostRows.filter(r => r.status === 'red');
+    const withRevenue = carryCostRows.filter(r => r.carryCostPct !== null);
+    const totalFees   = carryCostRows.reduce((s, r) => s + r.totalStorageFees, 0);
+    const totalRev    = carryCostRows.reduce((s, r) => s + r.totalRevenue, 0);
+    const avg         = withRevenue.length > 0
+      ? withRevenue.reduce((s, r) => s + r.carryCostPct!, 0) / withRevenue.length
+      : null;
+    const revenueAtRisk = redSkus.reduce((s, r) => s + r.totalStorageFees, 0);
+    return { redCount: redSkus.length, totalFees, totalRev, avg, revenueAtRisk, totalSkus: carryCostRows.length };
+  }, [carryCostRows]);
 
   // ── Expiry alerts (from Item Locations) ───────────────────────────────────
   const expiryAlerts = useMemo(() => {
@@ -501,6 +598,11 @@ export default function InventoryHealthTab() {
   }, [hasLocData, setLocLoaded]);
   useEffect(() => {
     if (!hasLocData && !hasChangeData) return;
+    // Don't write while any change file is still parsing — the entry would be
+    // filtered out (loading: true) and we'd persist an empty changeFileEntries
+    // list, which would overwrite any previously-saved data.  We wait until all
+    // files are either loaded or errored so the write always contains the full set.
+    if (changeFiles.some(f => f.loading)) return;
     registerInventoryData({
       expiryAlerts: expiryAlerts as ExpiryAlertRowPDF[],
       daysOnHand: daysOnHand as DaysOnHandRowPDF[],
@@ -1099,6 +1201,295 @@ export default function InventoryHealthTab() {
           )}
         </SectionCard>
       )}
+
+      {/* ── Carry Cost % of Revenue ──────────────────────────────────────────── */}
+      <div style={{ marginTop: 8 }}>
+        {/* Section title row */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#252F3E' }}>
+              Carry Cost % of Revenue
+            </span>
+            <span style={{ fontSize: 11, color: '#9CA3AF' }}>storage fees as a % of SKU revenue</span>
+            {productFile && (
+              <span style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>{productFile}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {productRows.length > 0 && (
+              <button
+                onClick={() => setCarryInternalOnly(v => !v)}
+                title={carryInternalOnly ? 'Mark visible to client' : 'Mark as internal only (hide from client exports)'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '4px 10px', borderRadius: 7, border: '1px solid',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'Metropolis', sans-serif",
+                  background: carryInternalOnly ? 'rgba(139,92,246,0.08)' : 'rgba(34,197,94,0.08)',
+                  color: carryInternalOnly ? '#7C3AED' : '#15803D',
+                  borderColor: carryInternalOnly ? 'rgba(139,92,246,0.3)' : 'rgba(34,197,94,0.3)',
+                }}
+              >
+                {carryInternalOnly ? (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    Internal Only
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Visible to Client
+                  </>
+                )}
+              </button>
+            )}
+            {productRows.length > 0 && (
+              <button
+                onClick={() => { setProductRows([]); setProductFile(null); setProductError(null); }}
+                style={{ fontSize: 11, color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}
+                title="Remove product catalog"
+              >
+                ✕ Remove
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Upload prompt */}
+        {productRows.length === 0 && (
+          <div
+            className="rounded-xl p-8 text-center"
+            style={{ background: 'rgba(68,114,232,0.04)', border: '1px dashed rgba(68,114,232,0.3)', marginBottom: 8 }}
+          >
+            <div style={{ fontSize: 28, marginBottom: 8 }}>💰</div>
+            <p className="text-sm font-semibold" style={{ color: '#252F3E', marginBottom: 4 }}>
+              Upload Product Catalog to calculate Carry Cost %
+            </p>
+            <p className="text-xs text-gray-400 max-w-sm mx-auto mb-5">
+              Export your ShipHero product/inventory list (CSV). Needs: <strong>SKU</strong>, <strong>3PL Customer</strong>, <strong>On Hand</strong>, <strong>Price</strong> columns.
+              {!hasChangeData && ' Also upload an Inventory Change Report for units-sold data.'}
+            </p>
+            <input
+              ref={productFileRef}
+              type="file"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleProductFile(f); e.target.value = ''; }}
+            />
+            {productLoading ? (
+              <span style={{ fontSize: 13, color: '#4472E8' }}>Parsing…</span>
+            ) : (
+              <button
+                onClick={() => productFileRef.current?.click()}
+                className="px-5 py-2 rounded-lg font-bold text-sm transition-all hover:opacity-80"
+                style={{ background: '#4472E8', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Metropolis', sans-serif" }}
+              >
+                Upload Product Catalog CSV
+              </button>
+            )}
+            {productError && (
+              <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>{productError}</p>
+            )}
+          </div>
+        )}
+
+        {/* Main section — shown when product data is loaded */}
+        {productRows.length > 0 && (
+          <>
+            {/* Settings bar */}
+            <div style={{
+              background: '#F9FAFB', border: '1px solid #e5e7eb', borderRadius: 10,
+              padding: '10px 16px', marginBottom: 14,
+              display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center',
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Settings</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#374151' }}>
+                Storage fee rate
+                <input
+                  type="number"
+                  min={0} step={0.01}
+                  value={storageRate}
+                  onChange={e => setStorageRate(Math.max(0, parseFloat(e.target.value) || 0))}
+                  style={{ width: 68, padding: '3px 7px', borderRadius: 6, border: '1.5px solid #D1D5DB', fontSize: 12, fontFamily: "'Metropolis', sans-serif" }}
+                />
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>$/unit/month</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#374151' }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+                Red above
+                <input
+                  type="number"
+                  min={1} max={200}
+                  value={redThreshold}
+                  onChange={e => setRedThreshold(Math.max(1, parseInt(e.target.value) || 30))}
+                  style={{ width: 52, padding: '3px 7px', borderRadius: 6, border: '1.5px solid #D1D5DB', fontSize: 12, fontFamily: "'Metropolis', sans-serif" }}
+                />
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>%</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#374151' }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+                Yellow above
+                <input
+                  type="number"
+                  min={1} max={200}
+                  value={yellowThreshold}
+                  onChange={e => setYellowThreshold(Math.max(1, parseInt(e.target.value) || 15))}
+                  style={{ width: 52, padding: '3px 7px', borderRadius: 6, border: '1.5px solid #D1D5DB', fontSize: 12, fontFamily: "'Metropolis', sans-serif" }}
+                />
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>%</span>
+              </label>
+              {!hasChangeData && (
+                <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600 }}>
+                  ⚠ No change report — units sold shown as 0
+                </span>
+              )}
+              {dateRange && (
+                <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 'auto' }}>
+                  Period: {Math.round(dateRange.periodDays)}d ({(dateRange.periodDays / 30).toFixed(1)} mo)
+                </span>
+              )}
+            </div>
+
+            {/* KPI callout row */}
+            {carryKPIs && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <KPICard
+                  label="SKUs in the Red"
+                  value={`${carryKPIs.redCount} / ${carryKPIs.totalSkus}`}
+                  sub={`carry cost > ${redThreshold}%`}
+                  accent={carryKPIs.redCount > 0 ? '#EF4444' : '#22C55E'}
+                />
+                <KPICard
+                  label="Total Storage Fees"
+                  value={fmtDollar(carryKPIs.totalFees)}
+                  sub="across all SKUs in period"
+                  accent="#EF5252"
+                />
+                <KPICard
+                  label="Total Revenue"
+                  value={fmtDollar(carryKPIs.totalRev)}
+                  sub="units sold × selling price"
+                  accent="#4472E8"
+                />
+                <KPICard
+                  label="Avg Carry Cost %"
+                  value={carryKPIs.avg !== null ? fmtPct(carryKPIs.avg) : '—'}
+                  sub="revenue-generating SKUs"
+                  accent={carryKPIs.avg !== null && carryKPIs.avg > redThreshold ? '#EF4444' : carryKPIs.avg !== null && carryKPIs.avg > yellowThreshold ? '#F59E0B' : '#22C55E'}
+                />
+              </div>
+            )}
+
+            {/* Table */}
+            <SectionCard>
+              <SectionHeader
+                title="Carry Cost by SKU"
+                sub="Ranked worst → best. Red = storage eating >30% of revenue."
+              >
+                <div className="flex items-center gap-2">
+                  {/* Legend */}
+                  <div className="flex items-center gap-3">
+                    {(Object.entries(CARRY_CFG) as [CarryStatus, typeof CARRY_CFG[CarryStatus]][])
+                      .filter(([k]) => k !== 'no-revenue')
+                      .map(([, cfg]) => (
+                        <span key={cfg.label} className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full"
+                          style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
+                          {cfg.label}
+                        </span>
+                      ))}
+                  </div>
+                  <ExportButton
+                    data={carryCostRows.map(r => ({
+                      Client: r.client,
+                      SKU: r.sku,
+                      Item: r.name,
+                      'Units Sold': r.unitsSold,
+                      'Avg Units in Storage': r.avgUnitsInStorage,
+                      'Total Revenue ($)': r.totalRevenue.toFixed(2),
+                      'Total Storage Fees ($)': r.totalStorageFees.toFixed(2),
+                      'Carry Cost %': r.carryCostPct !== null ? r.carryCostPct.toFixed(1) : 'N/A',
+                      Status: CARRY_CFG[r.status].label,
+                    }))}
+                    filename="carry_cost_by_sku"
+                  />
+                </div>
+              </SectionHeader>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" style={{ minWidth: 760 }}>
+                  <thead>
+                    <tr style={{ background: '#F5F5F0', borderBottom: '1px solid #e5e7eb' }}>
+                      {([
+                        { col: 'sku',             label: 'SKU' },
+                        { col: 'name',            label: 'Item' },
+                        { col: 'client',          label: 'Client' },
+                        { col: 'unitsSold',       label: 'Units Sold',        align: 'right' as const },
+                        { col: 'avgUnitsInStorage', label: 'Avg in Storage',  align: 'right' as const },
+                        { col: 'totalRevenue',    label: 'Revenue',           align: 'right' as const },
+                        { col: 'totalStorageFees', label: 'Storage Fees',     align: 'right' as const },
+                        { col: 'carryCostPct',    label: 'Carry Cost %',      align: 'right' as const },
+                        { col: 'status',          label: 'Status' },
+                      ] as { col: string; label: string; align?: 'left' | 'right' | 'center' }[]).map(({ col, label, align = 'left' }) => (
+                        <SortTh key={col} col={col} label={label} align={align}
+                          sortKey={carrySortKey} sortDir={carrySortDir}
+                          onSort={c => handleTableSort(c, carrySortKey, setCarrySortKey, carrySortDir, setCarrySortDir)}
+                        />
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(carryExpanded
+                      ? sortRows(carryCostRows, carrySortKey, carrySortDir)
+                      : sortRows(carryCostRows, carrySortKey, carrySortDir).slice(0, 10)
+                    ).map((r, idx) => {
+                      const cfg = CARRY_CFG[r.status];
+                      return (
+                        <tr key={r.client + r.sku}
+                          style={{
+                            background: idx % 2 === 0 ? '#fff' : 'rgba(68,114,232,0.025)',
+                            borderBottom: '1px solid #f3f4f6',
+                            borderLeft: `3px solid ${r.status === 'no-revenue' ? 'transparent' : cfg.border}`,
+                          }}>
+                          <td className="px-3 py-2.5 text-xs font-mono text-gray-500 whitespace-nowrap">{r.sku}</td>
+                          <td className="px-3 py-2.5 text-xs text-gray-700 max-w-xs" style={{ maxWidth: 200 }}>
+                            <span title={r.name}>{r.name.slice(0, 36)}{r.name.length > 36 ? '…' : ''}</span>
+                          </td>
+                          <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#252F3E' }}>{r.client}</td>
+                          <td className="px-3 py-2.5 text-right text-xs font-mono" style={{ color: '#374151' }}>{fmtN(r.unitsSold)}</td>
+                          <td className="px-3 py-2.5 text-right text-xs font-mono" style={{ color: '#374151' }}>{fmtN(r.avgUnitsInStorage)}</td>
+                          <td className="px-3 py-2.5 text-right text-xs font-mono" style={{ color: '#4472E8', fontWeight: 700 }}>{fmtDollar(r.totalRevenue)}</td>
+                          <td className="px-3 py-2.5 text-right text-xs font-mono" style={{ color: '#EF5252', fontWeight: 700 }}>{fmtDollar(r.totalStorageFees)}</td>
+                          <td className="px-3 py-2.5 text-right">
+                            <span className="font-black text-sm" style={{ color: cfg.text }}>
+                              {r.carryCostPct !== null ? fmtPct(r.carryCostPct) : '—'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap"
+                              style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
+                              {cfg.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {carryCostRows.length > 10 && (
+                <ExpandButton expanded={carryExpanded} total={carryCostRows.length} onToggle={() => setCarryExpanded(e => !e)} />
+              )}
+              <div className="px-5 py-3" style={{ borderTop: '1px solid #f3f4f6', background: '#FAFAFA' }}>
+                <p className="text-xs text-gray-400">
+                  <strong>Formula:</strong> Carry Cost % = (Units on Hand × ${storageRate.toFixed(2)}/unit/mo × period months) ÷ (Units Sold × Selling Price) × 100.
+                  Units on Hand from product catalog snapshot. Units Sold from inventory change report (DTC + B2B outbound).
+                </p>
+              </div>
+            </SectionCard>
+          </>
+        )}
+      </div>
+
       </div>
     </div>
   );

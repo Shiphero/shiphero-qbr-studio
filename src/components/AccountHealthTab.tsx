@@ -30,6 +30,7 @@ type HealthStatus = 'growing' | 'declining' | 'at-risk' | 'stable' | 'new';
 
 interface ChildSummary {
   childId: string;
+  childName: string;   // display name; falls back to childId when CSV has no name column
   months: string[];
   labelsByMonth: Record<string, number>;
   ordersByMonth: Record<string, number>;
@@ -259,13 +260,16 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
   // ── Per-child summaries ───────────────────────────────────────────────────
   const childSummaries = useMemo<ChildSummary[]>(() => {
     const map = new Map<string, {
+      childName: string;
       labelsByMonth: Record<string, number>;
       ordersByMonth: Record<string, number>;
       spendByMonth: Record<string, number>;
     }>();
 
     for (const r of rows) {
-      const ex = map.get(r.childAccountId) ?? { labelsByMonth: {}, ordersByMonth: {}, spendByMonth: {} };
+      const ex = map.get(r.childAccountId) ?? { childName: '', labelsByMonth: {}, ordersByMonth: {}, spendByMonth: {} };
+      // Keep the first non-empty child name we find for this ID
+      if (!ex.childName && r.childAccountName) ex.childName = r.childAccountName;
       ex.labelsByMonth[r.month] = (ex.labelsByMonth[r.month] ?? 0) + r.labelCount;
       ex.ordersByMonth[r.month] = (ex.ordersByMonth[r.month] ?? 0) + r.orderCount;
       ex.spendByMonth[r.month] = (ex.spendByMonth[r.month] ?? 0) + r.carrierSpend;
@@ -282,9 +286,11 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
       const prevOrders = data.ordersByMonth[prevMonth] ?? 0;
       const momOrderPct = prevOrders > 0 ? ((latestOrders - prevOrders) / prevOrders) * 100 : 0;
       const months = Object.keys(data.ordersByMonth).sort();
+      // Use name from CSV when available; fall back to the raw ID
+      const childName = data.childName || childId;
 
       const base = {
-        childId, months,
+        childId, childName, months,
         labelsByMonth: data.labelsByMonth,
         ordersByMonth: data.ordersByMonth,
         spendByMonth: data.spendByMonth,
@@ -367,7 +373,7 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
       .map((m) => {
         const point: Record<string, number | string> = { month: formatMonth(m) };
         for (const c of top6Children) {
-          point[`#${c.childId}`] = c.ordersByMonth[m] ?? 0;
+          point[c.childName] = c.ordersByMonth[m] ?? 0;
         }
         return point;
       }), [allMonths, top6Children]);
@@ -606,7 +612,7 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
                     <Line
                       key={c.childId}
                       type="monotone"
-                      dataKey={`#${c.childId}`}
+                      dataKey={c.childName}
                       stroke={PALETTE[i % PALETTE.length]}
                       strokeWidth={2}
                       dot={false}
@@ -698,7 +704,7 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
               <div className="flex items-center gap-2">
                 <ExportButton
                   data={sortedChildren.map((c) => ({
-                    'Child Account': `#${c.childId}`,
+                    'Child Account': c.childName,
                     'Months Active': c.months.length,
                     'Total Orders': c.totalOrders,
                     'Total Labels': c.totalLabels,
@@ -856,7 +862,7 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PALETTE[idx % PALETTE.length] }} />
-                            <span className="font-bold" style={{ color: '#252F3E' }}>#{c.childId}</span>
+                            <span className="font-bold" style={{ color: '#252F3E' }}>{c.childName}</span>
                             <span className="text-xs text-gray-400">{c.months.length} mo.</span>
                           </div>
                         </td>
