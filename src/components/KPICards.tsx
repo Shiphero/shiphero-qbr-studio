@@ -1,15 +1,16 @@
 import { useData } from '../context/DataContext';
 import { computeKPIs, formatCurrency, formatNumber } from '../utils/calculations';
-import InsightGate from './InsightGate';
+import InsightGate, { StatDeckButton } from './InsightGate';
 
 interface KPICardProps {
   label: string;
   value: string;
   subLabel?: string;
   icon: React.ReactNode;
+  deckBtn?: React.ReactNode;
 }
 
-function KPICard({ label, value, subLabel, icon }: KPICardProps) {
+function KPICard({ label, value, subLabel, icon, deckBtn }: KPICardProps) {
   return (
     <div
       className="rounded-xl p-5 flex items-start gap-4"
@@ -17,8 +18,10 @@ function KPICard({ label, value, subLabel, icon }: KPICardProps) {
         background: '#fff',
         borderLeft: '4px solid #4472E8',
         boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+        position: 'relative',
       }}
     >
+      {deckBtn}
       <div
         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
         style={{ background: 'rgba(68,114,232,0.1)' }}
@@ -50,13 +53,13 @@ export default function KPICards() {
     <>
     <div className="flex items-center justify-between mb-2">
       <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Shipping Analytics</span>
-      <InsightGate sectionKey="shippingKPIs" />
     </div>
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       <KPICard
         label="Total Shipments"
         value={formatNumber(kpis.totalShipments)}
         subLabel={dateSubLabel}
+        deckBtn={<StatDeckButton sectionKey="shippingKPIs" statId="totalShipments" />}
         icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4472E8" strokeWidth="2">
             <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -66,6 +69,7 @@ export default function KPICards() {
       <KPICard
         label="Total Shipping Cost"
         value={formatCurrency(kpis.totalCost)}
+        deckBtn={<StatDeckButton sectionKey="shippingKPIs" statId="totalLabelCost" />}
         icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4472E8" strokeWidth="2">
             <line x1="12" y1="1" x2="12" y2="23" />
@@ -76,6 +80,7 @@ export default function KPICards() {
       <KPICard
         label="Avg Cost Per Shipment"
         value={formatCurrency(kpis.avgCostPerShipment)}
+        deckBtn={<StatDeckButton sectionKey="shippingKPIs" statId="avgLabelCost" />}
         icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4472E8" strokeWidth="2">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import InsightGate from './InsightGate';
+import InsightGate, { StatDeckButton } from './InsightGate';
 import SortFilterButton from './SortFilterButton';
 import {
   BarChart,
@@ -72,12 +72,13 @@ const PALETTE = [
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SummaryCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function SummaryCard({ label, value, sub, accent, deckBtn }: { label: string; value: string; sub?: string; accent?: string; deckBtn?: React.ReactNode }) {
   return (
     <div
       className="rounded-xl p-4 flex flex-col gap-1"
-      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', position: 'relative' }}
     >
+      {deckBtn}
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div>
       <div className="text-2xl font-black" style={{ color: accent || '#252F3E' }}>{value}</div>
       {sub && <div className="text-xs text-gray-400">{sub}</div>}
@@ -370,7 +371,6 @@ export default function ThreePLTab() {
         <>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-bold uppercase tracking-wide text-gray-400">3PL Account Summary</span>
-          <InsightGate sectionKey="threePlKPIs" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <SummaryCard
@@ -378,23 +378,27 @@ export default function ThreePLTab() {
             value={fmtN(totals.customers)}
             sub="unique accounts"
             accent="#4472E8"
+            deckBtn={<StatDeckButton sectionKey="threePlKPIs" statId="3plAccounts" />}
           />
           <SummaryCard
             label="Total Shipments"
             value={fmtN(totals.shipments)}
             sub="across all accounts"
+            deckBtn={<StatDeckButton sectionKey="threePlKPIs" statId="totalShipments" />}
           />
           <SummaryCard
             label="Total Label Cost"
             value={fmtBig$(totals.totalShippingCost)}
             sub="sum of label costs"
             accent="#EF5252"
+            deckBtn={<StatDeckButton sectionKey="threePlKPIs" statId="totalLabelCost" />}
           />
           <SummaryCard
             label="Total Billed"
             value={fmtBig$(totals.totalOrderValue)}
             sub="total shipping charged"
             accent="#22C55E"
+            deckBtn={<StatDeckButton sectionKey="threePlKPIs" statId="totalBilled" />}
           />
           <SummaryCard
             label="Overall Avg Zone"
