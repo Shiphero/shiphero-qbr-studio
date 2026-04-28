@@ -5,6 +5,7 @@ import { dedupeWarehouseRows, formatMonth } from './statsParser';
 import shipheroWhiteUrl from '../assets/logos/shiphero-white.png';
 import { getIconDataUrl } from './deckIcons';
 import { COVER_COLOR_SCHEMES } from '../components/QBRDeckBuilder';
+import { applyKpiFilter } from './kpiSlideStats';
 
 // ── Brand palette (no '#') ─────────────────────────────────────────────────────
 const C = {
@@ -1312,6 +1313,56 @@ function buildInsightSlide(
   if (internalNotes) slide.addNotes(internalNotes);
 }
 
+// ── Generic KPI tiles slide ────────────────────────────────────────────────────
+/**
+ * Renders a slide with a grid of KPI stat tiles and puts insight fields in speaker notes.
+ * Tiles are arranged in a 2-column layout matching the Account Overview style.
+ */
+function buildKpiTilesSlide(
+  pptx: PptxGenJS,
+  sectionLabel: string,
+  title: string,
+  slideNum: number,
+  tiles: Array<{ id: string; label: string; value: string; color?: string }>,
+  insight?: import('../components/pdf/QBRDeckDocument').SectionInsight,
+  notes?: string,
+) {
+  const slide = pptx.addSlide();
+  slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG } });
+  addSlideMark(slide, slideNum);
+  addSlideTitle(slide, sectionLabel, title, 0.48, 0.18);
+
+  if (tiles.length > 0) {
+    const kpiX   = 0.48;
+    const kpiY   = BODY_Y;
+    const kpiW   = 1.52;
+    const kpiH   = 0.62;
+    const kpiGap = 0.08;
+
+    slide.addText('Key metrics for the reporting period', {
+      x: kpiX, y: kpiY - 0.26, w: 3.2, h: 0.2,
+      fontSize: 8, color: C.GRAY,
+    });
+
+    tiles.forEach((tile, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = kpiX + col * (kpiW + kpiGap);
+      const y = kpiY + row * (kpiH + kpiGap);
+      addKpiTile(slide, tile.label.toUpperCase(), tile.value, x, y, kpiW, kpiH, tile.color ?? C.NAVY);
+    });
+  }
+
+  const internalNotes = [
+    notes,
+    insight?.whatHappening  ? `What's happening: ${insight.whatHappening}` : '',
+    insight?.whyMatters     ? `Why it matters: ${insight.whyMatters}`      : '',
+    insight?.action         ? `Recommended action: ${insight.action}`      : '',
+    insight?.actionNote     ? `Notes: ${insight.actionNote}`               : '',
+  ].filter(Boolean).join('\n\n');
+  if (internalNotes) slide.addNotes(internalNotes);
+}
+
 // ── Custom slide builders ──────────────────────────────────────────────────────
 
 function buildDividerSlide(
@@ -1510,8 +1561,21 @@ function buildSectionSlide(
       break;
     }
     case 'shippingKPIs': {
+      const { kpis } = props;
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, 'SHIPPING ANALYTICS'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!kpis) {
+        buildInsightSlide(pptx, sectionLabelFor(k, 'SHIPPING ANALYTICS'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const allTiles = [
+        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Cost/Ship',    value: fmt$(kpis.avgLabelCost) },
+        { id: 'accounts',       label: 'Accounts',         value: fmtN(kpis.uniqueAccounts) },
+        ...(kpis.avgZone !== null ? [{ id: 'avgZone',    label: 'Avg Zone',    value: kpis.avgZone.toFixed(1) }] : []),
+        ...(kpis.totalCharged > 0 ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, 'SHIPPING ANALYTICS'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'zoneMap': {
@@ -1530,18 +1594,55 @@ function buildSectionSlide(
       break;
     }
     case 'inventoryKPIs': {
+      const { inventoryData } = props;
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, 'INVENTORY OVERVIEW'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!inventoryData) {
+        buildInsightSlide(pptx, sectionLabelFor(k, 'INVENTORY OVERVIEW'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const critical = inventoryData.expiryAlerts.filter(r => r.daysToExpire !== null && (r.daysToExpire as number) <= 30).length;
+      const allTiles = [
+        { id: 'expiryAlerts', label: 'Expiry Alerts',  value: fmtN(inventoryData.expiryAlerts.length) },
+        { id: 'critical30d',  label: 'Critical (≤30d)', value: fmtN(critical), color: critical > 0 ? C.RED : C.NAVY },
+        { id: 'dohLines',     label: 'DOH Lines',       value: fmtN(inventoryData.daysOnHand.length) },
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, 'INVENTORY OVERVIEW'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'rateCardKPIs': {
+      const { zoneComparisons } = props;
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, 'RATE CARD ANALYSIS'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!zoneComparisons.length) {
+        buildInsightSlide(pptx, sectionLabelFor(k, 'RATE CARD ANALYSIS'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const total = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
+      const wDelta = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
+      const allTiles = [
+        { id: 'zonesAnalyzed',  label: 'Zones Analyzed', value: `${zoneComparisons.length}` },
+        { id: 'avgRateDelta',   label: 'Avg Rate Delta',  value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? C.RED : C.GREEN },
+        { id: 'zonesAboveMRC',  label: 'Zones Above MRC', value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
+        { id: 'totalShipments', label: 'Total Shipments', value: fmtN(total) },
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, 'RATE CARD ANALYSIS'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'threePlKPIs': {
+      const { kpis, customerStats } = props;
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, '3PL OVERVIEW'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!kpis) {
+        buildInsightSlide(pptx, sectionLabelFor(k, '3PL OVERVIEW'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const allTiles = [
+        { id: '3plAccounts',    label: '3PL Accounts',    value: fmtN(kpis.uniqueAccounts) },
+        { id: 'totalShipments', label: 'Total Shipments', value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Label Cost',  value: fmt$(kpis.avgLabelCost) },
+        ...(kpis.totalCharged > 0 ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+        ...(customerStats[0] ? [{ id: 'topAccount', label: 'Top Account', value: trunc(customerStats[0].customer, 16) }] : []),
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, '3PL OVERVIEW'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'accountDetailTable': {
@@ -1550,13 +1651,46 @@ function buildSectionSlide(
       break;
     }
     case 'accountHealthKPIs': {
+      const statsRows = props.statsRows ?? [];
+      const deduped = dedupeWarehouseRows(statsRows);
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, 'ACCOUNT HEALTH'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!deduped.length) {
+        buildInsightSlide(pptx, sectionLabelFor(k, 'ACCOUNT HEALTH'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const t = deduped.reduce((acc, r) => ({
+        orders: acc.orders + r.orderCount,
+        labels: acc.labels + r.labelCount,
+        spend:  acc.spend  + r.carrierSpend,
+        gmv:    acc.gmv    + r.gmv,
+      }), { orders: 0, labels: 0, spend: 0, gmv: 0 });
+      const allTiles = [
+        { id: 'orders',       label: 'Orders',        value: fmtN(t.orders) },
+        { id: 'labels',       label: 'Labels',         value: fmtN(t.labels) },
+        { id: 'carrierSpend', label: 'Carrier Spend',  value: fmtK(t.spend) },
+        { id: 'gmv',          label: 'GMV',            value: fmtK(t.gmv) },
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, 'ACCOUNT HEALTH'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'priorQuarterKPIs': {
+      const { kpis, priorPeriod } = props;
       const insight = section.insight;
-      buildInsightSlide(pptx, sectionLabelFor(k, 'PRIOR QUARTER'), titleFor(k), slideNum, insight, notesFor(k));
+      if (!kpis || !priorPeriod) {
+        buildInsightSlide(pptx, sectionLabelFor(k, 'PRIOR QUARTER'), titleFor(k), slideNum, insight, notesFor(k));
+        break;
+      }
+      const shipDelta  = kpis.totalShipments - priorPeriod.totalShipments;
+      const spendDelta = kpis.totalLabelCost  - priorPeriod.totalSpend;
+      const costDelta  = kpis.avgLabelCost    - priorPeriod.avgLabelCost;
+      const pctStr = (d: number, base: number) => base === 0 ? '—' : `${d >= 0 ? '+' : ''}${((d / base) * 100).toFixed(1)}%`;
+      const allTiles = [
+        { id: 'shipmentsChange', label: 'Shipments Δ',  value: `${shipDelta >= 0 ? '+' : ''}${fmtN(shipDelta)}`,      color: shipDelta >= 0 ? C.GREEN : C.RED },
+        { id: 'spendChange',     label: 'Spend Δ',      value: `${spendDelta >= 0 ? '+' : ''}${fmtK(spendDelta)}`,    color: spendDelta <= 0 ? C.GREEN : C.RED },
+        { id: 'avgCostChange',   label: 'Avg Cost Δ',   value: `${costDelta >= 0 ? '+' : ''}$${costDelta.toFixed(2)}`, color: costDelta <= 0 ? C.GREEN : C.RED },
+        { id: 'priorPeriod',     label: 'Prior Period',  value: pctStr(shipDelta, priorPeriod.totalShipments) },
+      ];
+      buildKpiTilesSlide(pptx, sectionLabelFor(k, 'PRIOR QUARTER'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
     }
     case 'priorQuarterCarrierMix': {

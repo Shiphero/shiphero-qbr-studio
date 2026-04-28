@@ -99,6 +99,7 @@ interface DeckContextValue {
   removeCustomSlide: (id: string) => void;
   setLayout: (key: DeckSectionKey, layout: 'standard' | 'wide' | undefined) => void;
   setRowFilter: (key: DeckSectionKey, filter: string[] | undefined) => void;
+  setKpiFilter: (key: DeckSectionKey, filter: string[] | undefined) => void;
   setContentOffset: (key: DeckSectionKey, offset: { dx: number; dy: number } | undefined) => void;
   setNarrative: (key: DeckSectionKey, narrative: string | undefined) => void;
   setCallout: (key: DeckSectionKey, callout: { stat: string; headline: string; body?: string; icon?: string } | undefined) => void;
@@ -334,6 +335,10 @@ export function DeckProvider({ children }: { children: ReactNode }) {
     setSections(prev => prev.map(s => s.key === key ? { ...s, rowFilter: filter } : s));
   };
 
+  const setKpiFilter = (key: DeckSectionKey, filter: string[] | undefined) => {
+    setSections(prev => prev.map(s => s.key === key ? { ...s, kpiFilter: filter?.length ? filter : undefined } : s));
+  };
+
   const setContentOffset = (key: DeckSectionKey, offset: { dx: number; dy: number } | undefined) => {
     setSections(prev => prev.map(s => s.key === key ? { ...s, contentOffset: offset } : s));
   };
@@ -351,7 +356,7 @@ export function DeckProvider({ children }: { children: ReactNode }) {
       sections, setSections, toggleSection, setInsight, setCustomLabel, setSectionLabel,
       setNotes, setHidden, setDuplicates, availability,
       customSlides, addCustomSlide, updateCustomSlide, removeCustomSlide,
-      setLayout, setRowFilter, setContentOffset, setNarrative, setCallout,
+      setLayout, setRowFilter, setKpiFilter, setContentOffset, setNarrative, setCallout,
       clearDeck, applyTemplate, reorderDeck,
       dataInstances, addDataInstance, updateDataInstance, removeDataInstance,
       execSummary, setExecSummary, applyImportedDeckState,

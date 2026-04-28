@@ -24,6 +24,7 @@ import { LiveSlidePreview, ScaledSlidePreview } from './LiveSlidePreview';
 import { CALLOUT_ICONS, getIconDataUrl } from '../utils/deckIcons';
 import type { SlidePreviewData } from './LiveSlidePreview';
 import DeckPreviewModal from './DeckPreviewModal';
+import { KPI_SLIDE_STATS, isKpiSlide } from '../utils/kpiSlideStats';
 
 // ─── html2canvas snapshot capture ────────────────────────────────────────────
 async function captureElementPng(el: HTMLElement, scale = 2): Promise<string> {
@@ -821,7 +822,7 @@ export default function QBRDeckBuilder() {
     toggleSection: toggleSectionCtx, setCustomLabel, setSectionLabel,
     setNotes, setInsight, setHidden, setDuplicates,
     customSlides, addCustomSlide, updateCustomSlide, removeCustomSlide,
-    setLayout, setRowFilter, setContentOffset, setNarrative, setCallout,
+    setLayout, setRowFilter, setKpiFilter, setContentOffset, setNarrative, setCallout,
     clearDeck, applyTemplate, reorderDeck,
     dataInstances, addDataInstance, updateDataInstance, removeDataInstance,
     execSummary, setExecSummary,
@@ -1225,6 +1226,7 @@ export default function QBRDeckBuilder() {
         fontOption: selectedFont, statsRows: statsRows.length > 0 ? statsRows : undefined,
         customSlides: customSlides.length > 0 ? customSlides : undefined,
         dataInstances: instancesWithSnapshots.length > 0 ? instancesWithSnapshots : undefined,
+        priorPeriod: priorPeriod ?? undefined,
       };
       const blob = await generateQBRDeck(docProps, msg => setGenerateProgress(msg));
       const url = URL.createObjectURL(blob);
@@ -1612,6 +1614,7 @@ export default function QBRDeckBuilder() {
                     contentOffset={selectedSection?.contentOffset}
                     onOffsetChange={(offset) => setContentOffset(selectedKey as DeckSectionKey, offset)}
                     callout={selectedSection?.callout}
+                    kpiFilter={selectedSection?.kpiFilter}
                     width={480}
                   />
                 ) : selectedSlideItem?.type === 'instance' && selectedInstance ? (
@@ -1908,6 +1911,63 @@ export default function QBRDeckBuilder() {
                   </div>
                 </div>
               )}
+
+              {/* ── KPI stat tile selector ── */}
+              {!isStructural && selectedSlideItem?.type === 'data' && (() => {
+                const sKey = selectedKey as DeckSectionKey;
+                if (!isKpiSlide(sKey)) return null;
+                const statDefs = KPI_SLIDE_STATS[sKey] ?? [];
+                const currentFilter = selectedSection?.kpiFilter ?? [];
+                // A stat is "on" when filter is empty (all shown) or the id is in the filter
+                const isOn = (id: string) => currentFilter.length === 0 || currentFilter.includes(id);
+                const allOn = currentFilter.length === 0;
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Stats to Show
+                      </div>
+                      <button
+                        onClick={() => setKpiFilter(sKey, undefined)}
+                        style={{ fontSize: 10, color: allOn ? BLUE : '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: FONT }}
+                      >
+                        {allOn ? '✓ All selected' : 'Select all'}
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      {statDefs.map(stat => {
+                        const on = isOn(stat.id);
+                        return (
+                          <label key={stat.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '5px 8px', borderRadius: 6, background: on ? 'rgba(68,114,232,0.06)' : '#F9FAFB', border: `1px solid ${on ? 'rgba(68,114,232,0.2)' : '#E5E7EB'}` }}>
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={e => {
+                                // Build new filter set
+                                const currentIds = allOn ? statDefs.map(s => s.id) : [...currentFilter];
+                                const next = e.target.checked
+                                  ? [...new Set([...currentIds, stat.id])]
+                                  : currentIds.filter(id => id !== stat.id);
+                                // If all are checked, clear the filter (= show all)
+                                const allChecked = statDefs.every(s => next.includes(s.id));
+                                setKpiFilter(sKey, allChecked ? undefined : next.length ? next : undefined);
+                              }}
+                              style={{ accentColor: BLUE, width: 13, height: 13, flexShrink: 0 }}
+                            />
+                            <span style={{ fontSize: 12, color: on ? NAVY : '#9CA3AF', fontWeight: on ? 600 : 400 }}>{stat.label}</span>
+                            {stat.conditional && <span style={{ fontSize: 9, color: '#9CA3AF', marginLeft: 'auto' }}>conditional</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {!allOn && (
+                      <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 6 }}>
+                        {currentFilter.length} of {statDefs.length} stats selected
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ── Narrative editor (data slides + instances) ── */}
               {!isStructural && (selectedSlideItem?.type === 'data' || selectedSlideItem?.type === 'instance') && (() => {

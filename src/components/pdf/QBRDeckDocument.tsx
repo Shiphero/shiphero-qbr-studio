@@ -71,6 +71,8 @@ export interface DeckSectionToggle {
   layout?: 'standard' | 'wide';
   /** Row names to include (empty/null = show all) */
   rowFilter?: string[];
+  /** Stat tile IDs to show on KPI summary slides (empty/null = show all) */
+  kpiFilter?: string[];
   /** Inch offset from the default content position, applied in the slide preview and PPTX export */
   contentOffset?: { dx: number; dy: number };
   /** Freeform narrative text shown as bullet points on the slide and exported to PPTX/PDF */
@@ -151,6 +153,8 @@ export interface QBRDeckDocumentProps {
   statsRows?: import('../../utils/statsParser').MonthlyStatRow[];
   customSlides?: CustomDeckSlide[];
   dataInstances?: DataInstanceSlide[];
+  /** Prior-period comparison data for the Prior Quarter KPIs slide */
+  priorPeriod?: import('../../utils/periodComparison').PriorPeriodSummary | null;
 }
 
 // ── Agenda label map (for human-readable slide titles) ────────────────────────

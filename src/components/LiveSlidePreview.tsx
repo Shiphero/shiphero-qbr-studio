@@ -8,6 +8,7 @@ import type { RecommendedAction } from '../utils/recommendedActions';
 import type { Shipment } from '../types';
 import { dedupeWarehouseRows } from '../utils/statsParser';
 import { SECTION_LABELS } from '../context/DeckContext';
+import { applyKpiFilter } from '../utils/kpiSlideStats';
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
 const NAVY   = '#252F3E';
@@ -158,10 +159,11 @@ function AreaChart({ series, labels, W, H }: {
 }
 
 // ─── Per-slide content renderer ───────────────────────────────────────────────
-function SlideContent({ sectionKey, data, W, H }: {
+function SlideContent({ sectionKey, data, W, H, kpiFilter }: {
   sectionKey: DeckSectionKey;
   data: SlidePreviewData;
   W: number; H: number;
+  kpiFilter?: string[];
 }) {
   switch (sectionKey) {
 
@@ -170,14 +172,15 @@ function SlideContent({ sectionKey, data, W, H }: {
     case 'shippingKPIs': {
       const { kpis } = data;
       if (!kpis) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>No shipment data loaded</div>;
-      return <KpiGrid tiles={[
-        { label: 'Total Shipments',  value: fmtN(kpis.totalShipments) },
-        { label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
-        { label: 'Avg Label Cost',   value: `$${kpis.avgLabelCost.toFixed(2)}` },
-        { label: 'Accounts',         value: fmtN(kpis.uniqueAccounts) },
-        ...(kpis.avgZone !== null   ? [{ label: 'Avg Zone',      value: kpis.avgZone.toFixed(1) }] : []),
-        ...(kpis.totalCharged > 0   ? [{ label: 'Total Billed',  value: fmtK(kpis.totalCharged) }] : []),
-      ]} />;
+      const allTiles = [
+        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Label Cost',   value: `$${kpis.avgLabelCost.toFixed(2)}` },
+        { id: 'accounts',       label: 'Accounts',         value: fmtN(kpis.uniqueAccounts) },
+        ...(kpis.avgZone !== null ? [{ id: 'avgZone',    label: 'Avg Zone',     value: kpis.avgZone.toFixed(1) }] : []),
+        ...(kpis.totalCharged > 0 ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── Account Detail Table ───────────────────────────────────────────────────
@@ -408,33 +411,35 @@ function SlideContent({ sectionKey, data, W, H }: {
     // ── Account Health KPIs ────────────────────────────────────────────────────
     case 'accountHealthKPIs': {
       const deduped = dedupeWarehouseRows(data.statsRows);
+      if (!deduped.length) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>No stats data loaded</div>;
       const t = deduped.reduce((acc, r) => ({
         orders: acc.orders + r.orderCount,
         labels: acc.labels + r.labelCount,
         spend:  acc.spend  + r.carrierSpend,
         gmv:    acc.gmv    + r.gmv,
       }), { orders: 0, labels: 0, spend: 0, gmv: 0 });
-      if (!deduped.length) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>No stats data loaded</div>;
-      return <KpiGrid tiles={[
-        { label: 'Total Orders',  value: fmtN(t.orders) },
-        { label: 'Labels',        value: fmtN(t.labels) },
-        { label: 'Carrier Spend', value: fmtK(t.spend) },
-        { label: 'GMV',           value: fmtK(t.gmv) },
-      ]} />;
+      const allTiles = [
+        { id: 'orders',       label: 'Total Orders',  value: fmtN(t.orders) },
+        { id: 'labels',       label: 'Labels',         value: fmtN(t.labels) },
+        { id: 'carrierSpend', label: 'Carrier Spend',  value: fmtK(t.spend) },
+        { id: 'gmv',          label: 'GMV',            value: fmtK(t.gmv) },
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── 3PL KPIs ──────────────────────────────────────────────────────────────
     case 'threePlKPIs': {
       const { kpis, customerStats } = data;
       if (!kpis) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>No shipment data loaded</div>;
-      return <KpiGrid tiles={[
-        { label: '3PL Accounts',  value: fmtN(kpis.uniqueAccounts) },
-        { label: 'Total Shipments', value: fmtN(kpis.totalShipments) },
-        { label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
-        { label: 'Avg Label Cost', value: `$${kpis.avgLabelCost.toFixed(2)}` },
-        ...(kpis.totalCharged > 0 ? [{ label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
-        { label: 'Top Account', value: customerStats[0]?.customer ?? '–', sub: customerStats[0] ? fmtN(customerStats[0].orderCount) + ' shipments' : undefined },
-      ]} />;
+      const allTiles = [
+        { id: '3plAccounts',    label: '3PL Accounts',    value: fmtN(kpis.uniqueAccounts) },
+        { id: 'totalShipments', label: 'Total Shipments', value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Label Cost',  value: `$${kpis.avgLabelCost.toFixed(2)}` },
+        ...(kpis.totalCharged > 0 ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+        ...(customerStats[0] ? [{ id: 'topAccount', label: 'Top Account', value: customerStats[0].customer, sub: fmtN(customerStats[0].orderCount) + ' shipments' }] : []),
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── Rate Card KPIs ────────────────────────────────────────────────────────
@@ -443,27 +448,26 @@ function SlideContent({ sectionKey, data, W, H }: {
       if (!zoneComparisons.length) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>Requires Shipments CSV + warehouse ZIP</div>;
       const total = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
       const wDelta = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
-      return <KpiGrid tiles={[
-        { label: 'Zones Analyzed', value: `${zoneComparisons.length}` },
-        { label: 'Avg Rate Delta', value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? '#EF4444' : '#22C55E' },
-        { label: 'Zones Above MRC', value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
-        { label: 'Total Shipments', value: fmtN(total) },
-      ]} />;
+      const allTiles = [
+        { id: 'zonesAnalyzed',  label: 'Zones Analyzed',  value: `${zoneComparisons.length}` },
+        { id: 'avgRateDelta',   label: 'Avg Rate Delta',   value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? '#EF4444' : '#22C55E' },
+        { id: 'zonesAboveMRC',  label: 'Zones Above MRC',  value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
+        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(total) },
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── Inventory KPIs ────────────────────────────────────────────────────────
     case 'inventoryKPIs': {
       const { inventoryData } = data;
       if (!inventoryData) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>Upload inventory CSVs on Inventory tab</div>;
-      const critical = inventoryData.expiryAlerts.filter(r => {
-        const d = r.daysToExpire;
-        return d !== null && d <= 30;
-      }).length;
-      return <KpiGrid tiles={[
-        { label: 'Expiry Alerts',  value: fmtN(inventoryData.expiryAlerts.length) },
-        { label: 'Critical (≤30d)', value: fmtN(critical), color: critical > 0 ? '#EF4444' : NAVY },
-        { label: 'DOH Lines',      value: fmtN(inventoryData.daysOnHand.length) },
-      ]} />;
+      const critical = inventoryData.expiryAlerts.filter(r => r.daysToExpire !== null && r.daysToExpire <= 30).length;
+      const allTiles = [
+        { id: 'expiryAlerts', label: 'Expiry Alerts',   value: fmtN(inventoryData.expiryAlerts.length) },
+        { id: 'critical30d',  label: 'Critical (≤30d)', value: fmtN(critical), color: critical > 0 ? '#EF4444' : NAVY },
+        { id: 'dohLines',     label: 'DOH Lines',        value: fmtN(inventoryData.daysOnHand.length) },
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── Child Account Scorecard ────────────────────────────────────────────────
@@ -540,16 +544,17 @@ function SlideContent({ sectionKey, data, W, H }: {
     case 'priorQuarterKPIs': {
       const { kpis, priorPeriod } = data;
       if (!priorPeriod || !kpis) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>Upload a prior-period CSV on the Prior Quarter tab</div>;
-      const shipDelta = kpis.totalShipments - priorPeriod.totalShipments;
-      const spendDelta = kpis.totalLabelCost - priorPeriod.totalSpend;
-      const costDelta  = kpis.avgLabelCost   - priorPeriod.avgLabelCost;
+      const shipDelta  = kpis.totalShipments - priorPeriod.totalShipments;
+      const spendDelta = kpis.totalLabelCost  - priorPeriod.totalSpend;
+      const costDelta  = kpis.avgLabelCost    - priorPeriod.avgLabelCost;
       const pctStr = (d: number, base: number) => base === 0 ? '—' : `${d >= 0 ? '+' : ''}${((d / base) * 100).toFixed(1)}%`;
-      return <KpiGrid tiles={[
-        { label: 'Shipments Δ',   value: `${shipDelta >= 0 ? '+' : ''}${fmtN(shipDelta)}`,     sub: pctStr(shipDelta, priorPeriod.totalShipments),  color: shipDelta >= 0 ? '#22C55E' : '#EF4444' },
-        { label: 'Spend Δ',       value: `${spendDelta >= 0 ? '+' : ''}${fmtK(spendDelta)}`,   sub: pctStr(spendDelta, priorPeriod.totalSpend),      color: spendDelta <= 0 ? '#22C55E' : '#EF4444' },
-        { label: 'Avg Cost Δ',    value: `${costDelta >= 0 ? '+' : ''}$${costDelta.toFixed(2)}`, sub: pctStr(costDelta, priorPeriod.avgLabelCost),    color: costDelta <= 0 ? '#22C55E' : '#EF4444' },
-        { label: 'Prior Period',  value: priorPeriod.fileName.replace(/\.csv$/i, '').slice(0, 18) },
-      ]} />;
+      const allTiles = [
+        { id: 'shipmentsChange', label: 'Shipments Δ',  value: `${shipDelta >= 0 ? '+' : ''}${fmtN(shipDelta)}`,      sub: pctStr(shipDelta, priorPeriod.totalShipments),  color: shipDelta >= 0 ? '#22C55E' : '#EF4444' },
+        { id: 'spendChange',     label: 'Spend Δ',      value: `${spendDelta >= 0 ? '+' : ''}${fmtK(spendDelta)}`,    sub: pctStr(spendDelta, priorPeriod.totalSpend),      color: spendDelta <= 0 ? '#22C55E' : '#EF4444' },
+        { id: 'avgCostChange',   label: 'Avg Cost Δ',   value: `${costDelta >= 0 ? '+' : ''}$${costDelta.toFixed(2)}`, sub: pctStr(costDelta, priorPeriod.avgLabelCost),    color: costDelta <= 0 ? '#22C55E' : '#EF4444' },
+        { id: 'priorPeriod',     label: 'Prior Period', value: priorPeriod.fileName.replace(/\.csv$/i, '').slice(0, 18) },
+      ];
+      return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
 
     // ── Prior Quarter Carrier Mix ─────────────────────────────────────────────
@@ -601,7 +606,7 @@ function SlideContent({ sectionKey, data, W, H }: {
 // Renders LiveSlidePreview at `nativeWidth` then CSS-scales to `displayWidth`.
 // This ensures all hardcoded content font sizes scale proportionally.
 export function ScaledSlidePreview({
-  sectionKey, label, data, displayWidth, nativeWidth = 480, borderRadius = 6,
+  sectionKey, label, data, displayWidth, nativeWidth = 480, borderRadius = 6, kpiFilter,
 }: {
   sectionKey: DeckSectionKey;
   label: string;
@@ -609,13 +614,14 @@ export function ScaledSlidePreview({
   displayWidth: number;
   nativeWidth?: number;
   borderRadius?: number;
+  kpiFilter?: string[];
 }) {
   const scale = displayWidth / nativeWidth;
   const displayHeight = Math.round(displayWidth * 9 / 16);
   return (
     <div style={{ width: displayWidth, height: displayHeight, overflow: 'hidden', borderRadius, flexShrink: 0, position: 'relative' }}>
       <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
-        <LiveSlidePreview sectionKey={sectionKey} label={label} data={data} width={nativeWidth} />
+        <LiveSlidePreview sectionKey={sectionKey} label={label} data={data} width={nativeWidth} kpiFilter={kpiFilter} />
       </div>
     </div>
   );
@@ -631,11 +637,13 @@ export interface LiveSlidePreviewProps {
   onOffsetChange?: (offset: ContentOffset) => void;
   width?:          number;
   callout?:        { stat: string; headline: string; body?: string; icon?: string };
+  /** Stat tile IDs to show — empty/undefined means show all */
+  kpiFilter?:      string[];
 }
 
 export function LiveSlidePreview({
   sectionKey, label, sectionLabel, data,
-  contentOffset, onOffsetChange, width = 480, callout,
+  contentOffset, onOffsetChange, width = 480, callout, kpiFilter,
 }: LiveSlidePreviewProps) {
   const H      = Math.round(width * 9 / 16);   // 270 at default width
   const sc     = width / 10;                    // px per PPTX inch = 48
@@ -756,7 +764,7 @@ export function LiveSlidePreview({
         }}
       >
         <div style={{ transform: `translate(${txPx}px, ${tyPx}px) scale(${contentScale})`, transformOrigin: 'top left', width: baseW, height: baseH }}>
-          <SlideContent sectionKey={sectionKey} data={data} W={baseW} H={baseH} />
+          <SlideContent sectionKey={sectionKey} data={data} W={baseW} H={baseH} kpiFilter={kpiFilter} />
         </div>
 
         {/* Hint badge */}
