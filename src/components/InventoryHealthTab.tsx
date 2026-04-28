@@ -18,7 +18,7 @@ import { usePDF } from '../context/PDFContext';
 import { useData } from '../context/DataContext';
 import type { ExpiryAlertRowPDF, DaysOnHandRowPDF, POCadenceRowPDF } from '../context/PDFContext';
 import { safeGetItem, STORAGE_KEYS } from '../utils/storageUtils';
-import InsightGate from './InsightGate';
+import InsightGate, { StatDeckButton } from './InsightGate';
 import SortFilterButton from './SortFilterButton';
 
 // ─── Palette & constants ───────────────────────────────────────────────────────
@@ -141,10 +141,11 @@ function SortTh({ label, col, sortKey, sortDir, onSort, align = 'left', color }:
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function KPICard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function KPICard({ label, value, sub, accent, deckBtn }: { label: string; value: string; sub?: string; accent?: string; deckBtn?: React.ReactNode }) {
   return (
     <div className="rounded-xl p-4 flex flex-col gap-1"
-      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', position: 'relative' }}>
+      {deckBtn}
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div>
       <div className="text-2xl font-black" style={{ color: accent || '#252F3E' }}>{value}</div>
       {sub && <div className="text-xs text-gray-400">{sub}</div>}
@@ -646,7 +647,6 @@ export default function InventoryHealthTab() {
         <>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Inventory Summary</span>
-          <InsightGate sectionKey="inventoryKPIs" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <KPICard
@@ -654,29 +654,34 @@ export default function InventoryHealthTab() {
             value={locKPIs ? fmtN(locKPIs.activeSkus) : '—'}
             sub="unique client+SKU pairs"
             accent="#4472E8"
+            deckBtn={<StatDeckButton sectionKey="inventoryKPIs" statId="activeSkus" />}
           />
           <KPICard
             label="Total Units on Hand"
             value={locKPIs ? fmtBig(locKPIs.totalUnits) : '—'}
             sub="excl. damages & receiving"
+            deckBtn={<StatDeckButton sectionKey="inventoryKPIs" statId="totalUnits" />}
           />
           <KPICard
             label="Expiring < 90 Days"
             value={locKPIs ? fmtN(locKPIs.expiring90) : '—'}
             sub={locKPIs && locKPIs.expiringCritical > 0 ? `${locKPIs.expiringCritical} critical (<30d)` : 'lot-tracked items'}
             accent={locKPIs && locKPIs.expiringCritical > 0 ? '#EF4444' : '#EF5252'}
+            deckBtn={<StatDeckButton sectionKey="inventoryKPIs" statId="expiring90" />}
           />
           <KPICard
             label="Avg Days on Hand"
             value={avgDOH !== null ? `${avgDOH}d` : '—'}
             sub="moving SKUs only"
             accent="#22C55E"
+            deckBtn={<StatDeckButton sectionKey="inventoryKPIs" statId="avgDOH" />}
           />
           <KPICard
             label="Manual Adjustments"
             value={changeKPIs ? fmtN(changeKPIs.manualAdj) : '—'}
             sub={dateRange ? `${Math.round(dateRange.periodDays)}d period` : 'in period'}
             accent="#8B5CF6"
+            deckBtn={<StatDeckButton sectionKey="inventoryKPIs" statId="manualAdj" />}
           />
         </div>
         </>

@@ -1600,11 +1600,19 @@ function buildSectionSlide(
         buildInsightSlide(pptx, sectionLabelFor(k, 'INVENTORY OVERVIEW'), titleFor(k), slideNum, insight, notesFor(k));
         break;
       }
-      const critical = inventoryData.expiryAlerts.filter(r => r.daysToExpire !== null && (r.daysToExpire as number) <= 30).length;
+      const loc = inventoryData.locRows ?? [];
+      const skuSet = new Set(loc.map(r => `${r.client}::${r.sku}`));
+      const totalUnits = loc.filter(r => r.pickable && r.sellable).reduce((s, r) => s + r.units, 0);
+      const expiring90 = loc.filter(r => r.hasLot && r.daysToExpire !== null && (r.daysToExpire as number) <= 90).length;
+      const movingDOH = inventoryData.daysOnHand.filter(r => r.doh !== null);
+      const avgDOHVal = movingDOH.length ? Math.round(movingDOH.reduce((s, r) => s + r.doh!, 0) / movingDOH.length) : null;
+      const manualAdj = inventoryData.manualAdjRows?.length ?? 0;
       const allTiles = [
-        { id: 'expiryAlerts', label: 'Expiry Alerts',  value: fmtN(inventoryData.expiryAlerts.length) },
-        { id: 'critical30d',  label: 'Critical (≤30d)', value: fmtN(critical), color: critical > 0 ? C.RED : C.NAVY },
-        { id: 'dohLines',     label: 'DOH Lines',       value: fmtN(inventoryData.daysOnHand.length) },
+        { id: 'activeSkus',  label: 'Active SKUs',         value: loc.length ? fmtN(skuSet.size) : '—' },
+        { id: 'totalUnits',  label: 'Total Units on Hand',  value: loc.length ? fmtN(totalUnits) : '—' },
+        { id: 'expiring90',  label: 'Expiring < 90 Days',  value: loc.length ? fmtN(expiring90) : '—', color: expiring90 > 0 ? C.RED : C.NAVY },
+        { id: 'avgDOH',      label: 'Avg Days on Hand',     value: avgDOHVal !== null ? `${avgDOHVal}d` : '—' },
+        { id: 'manualAdj',   label: 'Manual Adjustments',   value: fmtN(manualAdj) },
       ];
       buildKpiTilesSlide(pptx, sectionLabelFor(k, 'INVENTORY OVERVIEW'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;
@@ -1616,13 +1624,19 @@ function buildSectionSlide(
         buildInsightSlide(pptx, sectionLabelFor(k, 'RATE CARD ANALYSIS'), titleFor(k), slideNum, insight, notesFor(k));
         break;
       }
-      const total = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
-      const wDelta = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
+      const total      = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
+      const mrcTotal   = zoneComparisons.reduce((a, b) => a + b.rateCardAvg * b.shipmentCount, 0);
+      const actTotal   = zoneComparisons.reduce((a, b) => a + b.actualAvg   * b.shipmentCount, 0);
+      const totalDelta = actTotal - mrcTotal;
+      const wDelta     = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
       const allTiles = [
-        { id: 'zonesAnalyzed',  label: 'Zones Analyzed', value: `${zoneComparisons.length}` },
-        { id: 'avgRateDelta',   label: 'Avg Rate Delta',  value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? C.RED : C.GREEN },
-        { id: 'zonesAboveMRC',  label: 'Zones Above MRC', value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
-        { id: 'totalShipments', label: 'Total Shipments', value: fmtN(total) },
+        { id: 'totalShipments', label: 'Shipments Analyzed', value: fmtN(total) },
+        { id: 'mrcTotal',       label: 'ShipHero MRC Total', value: fmtK(mrcTotal) },
+        { id: 'actualTotal',    label: 'Actual Total Paid',  value: fmtK(actTotal) },
+        { id: 'totalDelta',     label: 'Total Delta',        value: `${totalDelta >= 0 ? '+' : ''}${fmtK(totalDelta)}`, color: totalDelta > 0.01 ? C.RED : C.GREEN },
+        { id: 'zonesAnalyzed',  label: 'Zones Analyzed',     value: `${zoneComparisons.length}` },
+        { id: 'avgRateDelta',   label: 'Avg Rate Delta',     value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? C.RED : C.GREEN },
+        { id: 'zonesAboveMRC',  label: 'Zones Above MRC',    value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
       ];
       buildKpiTilesSlide(pptx, sectionLabelFor(k, 'RATE CARD ANALYSIS'), titleFor(k), slideNum, applyKpiFilter(allTiles, section.kpiFilter), insight, notesFor(k));
       break;

@@ -45,17 +45,22 @@ export const KPI_SLIDE_STATS: Partial<Record<DeckSectionKey, KpiStatDef[]>> = {
     { id: 'topAccount',    label: 'Top Account' },
   ],
 
-  rateCardKPIs: [
-    { id: 'zonesAnalyzed', label: 'Zones Analyzed' },
-    { id: 'avgRateDelta',  label: 'Avg Rate Delta' },
-    { id: 'zonesAboveMRC', label: 'Zones Above MRC' },
-    { id: 'totalShipments',label: 'Total Shipments' },
+  inventoryKPIs: [
+    { id: 'activeSkus',  label: 'Active SKUs',          conditional: true },
+    { id: 'totalUnits',  label: 'Total Units on Hand',   conditional: true },
+    { id: 'expiring90',  label: 'Expiring < 90 Days',   conditional: true },
+    { id: 'avgDOH',      label: 'Avg Days on Hand',      conditional: true },
+    { id: 'manualAdj',   label: 'Manual Adjustments',    conditional: true },
   ],
 
-  inventoryKPIs: [
-    { id: 'expiryAlerts', label: 'Expiry Alerts' },
-    { id: 'critical30d',  label: 'Critical (≤30d)' },
-    { id: 'dohLines',     label: 'DOH Lines' },
+  rateCardKPIs: [
+    { id: 'totalShipments', label: 'Shipments Analyzed' },
+    { id: 'mrcTotal',       label: 'ShipHero MRC Total',  conditional: true },
+    { id: 'actualTotal',    label: 'Actual Total Paid',    conditional: true },
+    { id: 'totalDelta',     label: 'Total Delta',          conditional: true },
+    { id: 'zonesAnalyzed',  label: 'Zones Analyzed' },
+    { id: 'avgRateDelta',   label: 'Avg Rate Delta' },
+    { id: 'zonesAboveMRC',  label: 'Zones Above MRC' },
   ],
 
   priorQuarterKPIs: [

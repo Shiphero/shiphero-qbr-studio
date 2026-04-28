@@ -446,13 +446,19 @@ function SlideContent({ sectionKey, data, W, H, kpiFilter }: {
     case 'rateCardKPIs': {
       const { zoneComparisons } = data;
       if (!zoneComparisons.length) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>Requires Shipments CSV + warehouse ZIP</div>;
-      const total = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
-      const wDelta = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
+      const total    = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
+      const mrcTotal = zoneComparisons.reduce((a, b) => a + b.rateCardAvg * b.shipmentCount, 0);
+      const actTotal = zoneComparisons.reduce((a, b) => a + b.actualAvg   * b.shipmentCount, 0);
+      const wDelta   = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
+      const totalDelta = actTotal - mrcTotal;
       const allTiles = [
-        { id: 'zonesAnalyzed',  label: 'Zones Analyzed',  value: `${zoneComparisons.length}` },
-        { id: 'avgRateDelta',   label: 'Avg Rate Delta',   value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? '#EF4444' : '#22C55E' },
-        { id: 'zonesAboveMRC',  label: 'Zones Above MRC',  value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
-        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(total) },
+        { id: 'totalShipments', label: 'Shipments Analyzed', value: fmtN(total) },
+        { id: 'mrcTotal',       label: 'ShipHero MRC Total', value: fmtK(mrcTotal) },
+        { id: 'actualTotal',    label: 'Actual Total Paid',  value: fmtK(actTotal) },
+        { id: 'totalDelta',     label: 'Total Delta',        value: `${totalDelta >= 0 ? '+' : ''}${fmtK(totalDelta)}`, color: totalDelta > 0.01 ? '#EF4444' : '#22C55E' },
+        { id: 'zonesAnalyzed',  label: 'Zones Analyzed',     value: `${zoneComparisons.length}` },
+        { id: 'avgRateDelta',   label: 'Avg Rate Delta',     value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? '#EF4444' : '#22C55E' },
+        { id: 'zonesAboveMRC',  label: 'Zones Above MRC',    value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
       ];
       return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
@@ -461,11 +467,19 @@ function SlideContent({ sectionKey, data, W, H, kpiFilter }: {
     case 'inventoryKPIs': {
       const { inventoryData } = data;
       if (!inventoryData) return <div style={{ color: '#9CA3AF', fontSize: 11, padding: 8 }}>Upload inventory CSVs on Inventory tab</div>;
-      const critical = inventoryData.expiryAlerts.filter(r => r.daysToExpire !== null && r.daysToExpire <= 30).length;
+      const loc = inventoryData.locRows ?? [];
+      const skus = new Set(loc.map(r => `${r.client}::${r.sku}`));
+      const totalUnits = loc.filter(r => r.pickable && r.sellable).reduce((s, r) => s + r.units, 0);
+      const expiring90 = loc.filter(r => r.hasLot && r.daysToExpire !== null && r.daysToExpire <= 90).length;
+      const movingDOH = inventoryData.daysOnHand.filter(r => r.doh !== null);
+      const avgDOH = movingDOH.length ? Math.round(movingDOH.reduce((s, r) => s + r.doh!, 0) / movingDOH.length) : null;
+      const manualAdj = inventoryData.manualAdjRows?.length ?? 0;
       const allTiles = [
-        { id: 'expiryAlerts', label: 'Expiry Alerts',   value: fmtN(inventoryData.expiryAlerts.length) },
-        { id: 'critical30d',  label: 'Critical (≤30d)', value: fmtN(critical), color: critical > 0 ? '#EF4444' : NAVY },
-        { id: 'dohLines',     label: 'DOH Lines',        value: fmtN(inventoryData.daysOnHand.length) },
+        { id: 'activeSkus',  label: 'Active SKUs',         value: loc.length ? fmtN(skus.size) : '—' },
+        { id: 'totalUnits',  label: 'Total Units on Hand',  value: loc.length ? fmtN(totalUnits) : '—' },
+        { id: 'expiring90',  label: 'Expiring < 90 Days',  value: loc.length ? fmtN(expiring90) : '—', color: expiring90 > 0 ? '#EF4444' : NAVY },
+        { id: 'avgDOH',      label: 'Avg Days on Hand',     value: avgDOH !== null ? `${avgDOH}d` : '—' },
+        { id: 'manualAdj',   label: 'Manual Adjustments',   value: fmtN(manualAdj) },
       ];
       return <KpiGrid tiles={applyKpiFilter(allTiles, kpiFilter)} />;
     }
