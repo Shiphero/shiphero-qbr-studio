@@ -18,6 +18,7 @@ import type {
 } from './pdf/QBRDocument';
 import type { DeckSectionKey, QBRDeckDocumentProps, TeamMember, SectionInsight, DataInstanceSlide } from './pdf/QBRDeckDocument';
 import type { CustomDeckSlide } from '../context/DeckContext';
+import shipheroIsoUrl from '../assets/logos/shiphero-iso.png';
 import { TEAM_MEMBER_PRESETS } from '../data/teamMemberPresets';
 import { useDeck, SECTION_ORDER, SECTION_LABELS } from '../context/DeckContext';
 import { LiveSlidePreview, ScaledSlidePreview } from './LiveSlidePreview';
@@ -94,6 +95,7 @@ interface PersistedBuilderState {
   deckLogo?: string;
   coverPhoto?: string;
   coverColorScheme?: CoverColorSchemeId;
+  coverLayout?: 'A' | 'B' | 'C';
 }
 
 function loadBuilderState(): Partial<PersistedBuilderState> {
@@ -271,9 +273,107 @@ function ChartGlyph({ type, scale = 1 }: { type: string; scale?: number }) {
   );
 }
 
+// ─── Cover slide mini-render (renders the chosen layout) ──────────────────
+function CoverThumb({
+  layout, size, coverPhotoUrl, logoUrl, bg, accent, darkText, clientName, reportingPeriod,
+}: {
+  layout: 'A' | 'B' | 'C';
+  size: 'sm' | 'lg';
+  coverPhotoUrl?: string;
+  logoUrl?: string;
+  bg: string;
+  accent: string;
+  darkText: boolean;
+  clientName?: string;
+  reportingPeriod?: string;
+}) {
+  const lg   = size === 'lg';
+  const text = darkText ? NAVY : '#fff';
+  const sub  = darkText ? 'rgba(37,47,62,0.55)' : 'rgba(255,255,255,0.55)';
+  const name = (clientName || 'Client').trim();
+
+  if (layout === 'B') {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
+        {/* Left panel */}
+        <div style={{ width: '42%', position: 'relative', background: bg, overflow: 'hidden' }}>
+          {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: lg ? 16 : 6 }}>
+            <img src={shipheroIsoUrl} alt="" style={{ height: lg ? 96 : 32, objectFit: 'contain' }} />
+            <div style={{ fontSize: lg ? 9 : 3.5, color: text, fontWeight: 700, letterSpacing: 2, textAlign: 'center', marginTop: lg ? 8 : 3, lineHeight: 1.3 }}>QUARTERLY<br/>BUSINESS<br/>REVIEW</div>
+          </div>
+          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: lg ? 4 : 1.5, background: accent }} />
+        </div>
+        {/* Right panel */}
+        <div style={{ flex: 1, background: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: lg ? '0 28px' : '0 8px' }}>
+          <div style={{ fontSize: lg ? 8 : 3, fontWeight: 700, color: BLUE, letterSpacing: 2, marginBottom: lg ? 6 : 2 }}>PREPARED FOR</div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" style={{ height: lg ? 56 : 20, maxWidth: lg ? 200 : 70, objectFit: 'contain', objectPosition: 'left center', marginBottom: lg ? 10 : 3 }} />
+          ) : (
+            <div style={{ fontSize: lg ? 13 : 5, fontWeight: 800, color: NAVY, marginBottom: lg ? 10 : 3, letterSpacing: 1 }}>{name.toUpperCase()}</div>
+          )}
+          <div style={{ fontSize: lg ? 26 : 9, fontWeight: 800, color: NAVY, lineHeight: 1.1 }}>{name}</div>
+          <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 10 : 3 }} />
+          {reportingPeriod && <div style={{ fontSize: lg ? 13 : 5, color: accent, fontWeight: 700, marginTop: lg ? 8 : 2 }}>{reportingPeriod}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'C') {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {/* Banner top */}
+        <div style={{ height: '38%', background: bg, position: 'relative', display: 'flex', alignItems: 'center', padding: lg ? '0 24px' : '0 8px', gap: lg ? 12 : 4, overflow: 'hidden' }}>
+          {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />}
+          <img src={shipheroIsoUrl} alt="" style={{ height: lg ? 60 : 22, objectFit: 'contain', position: 'relative', zIndex: 1 }} />
+          <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+            <div style={{ fontSize: lg ? 9 : 3.5, color: text, fontWeight: 700, letterSpacing: 3 }}>QUARTERLY BUSINESS REVIEW</div>
+            {reportingPeriod && <div style={{ fontSize: lg ? 18 : 7, color: text, fontWeight: 800, marginTop: lg ? 4 : 1 }}>{reportingPeriod}</div>}
+          </div>
+        </div>
+        {/* Accent stripe */}
+        <div style={{ height: lg ? 4 : 1.5, background: accent }} />
+        {/* Lower */}
+        <div style={{ flex: 1, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: lg ? 16 : 6 }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" style={{ height: lg ? 70 : 24, maxWidth: lg ? 280 : 100, objectFit: 'contain', marginBottom: lg ? 14 : 4 }} />
+          ) : (
+            <div style={{ fontSize: lg ? 18 : 7, color: NAVY, fontWeight: 800, letterSpacing: 1, marginBottom: lg ? 14 : 4 }}>{name.toUpperCase()}</div>
+          )}
+          <div style={{ fontSize: lg ? 28 : 10, fontWeight: 800, color: NAVY, textAlign: 'center', lineHeight: 1.1 }}>{name}</div>
+          <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 8 : 3 }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Layout A — Centered Hero (default)
+  return (
+    <>
+      {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: lg ? 4 : 1.5, background: accent, zIndex: 1 }} />
+      {/* ShipHero iso top-right */}
+      <img src={shipheroIsoUrl} alt="" style={{ position: 'absolute', top: lg ? 16 : 6, right: lg ? 18 : 6, height: lg ? 26 : 10, objectFit: 'contain', zIndex: 2 }} />
+      <div style={{ padding: lg ? '40px 32px 24px' : '14px 12px 8px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt="" style={{ height: lg ? 80 : 28, maxWidth: lg ? 280 : 100, objectFit: 'contain', marginBottom: lg ? 14 : 4 }} />
+        ) : (
+          <div style={{ fontSize: lg ? 22 : 8, color: text, fontWeight: 800, letterSpacing: 1, marginBottom: lg ? 14 : 4 }}>{name.toUpperCase()}</div>
+        )}
+        <div style={{ fontSize: lg ? 30 : 11, fontWeight: 800, color: text, textAlign: 'center', lineHeight: 1.1 }}>{name}</div>
+        <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 10 : 3 }} />
+        <div style={{ fontSize: lg ? 9 : 3.5, color: sub, fontWeight: 700, letterSpacing: 2, marginTop: lg ? 8 : 2 }}>QUARTERLY BUSINESS REVIEW</div>
+        {reportingPeriod && <div style={{ fontSize: lg ? 13 : 5, color: accent, fontWeight: 700, marginTop: lg ? 4 : 1 }}>{reportingPeriod}</div>}
+      </div>
+    </>
+  );
+}
+
 // ─── Slide thumbnail (16:9 mini canvas) ───────────────────────────────────
 function SlideThumbnail({
   sectionKey, size = 'sm', customType, customVariant, coverPhotoUrl, logoUrl, coverBg, coverAccent,
+  coverLayout, clientName, reportingPeriod,
 }: {
   sectionKey: string;
   size?: 'sm' | 'lg';
@@ -283,6 +383,9 @@ function SlideThumbnail({
   logoUrl?: string;
   coverBg?: string;
   coverAccent?: string;
+  coverLayout?: 'A' | 'B' | 'C';
+  clientName?: string;
+  reportingPeriod?: string;
 }) {
   const w = size === 'lg' ? 480 : 160;
   const h = Math.round(w / (16 / 9));
@@ -394,24 +497,17 @@ function SlideThumbnail({
       display: 'flex', flexDirection: 'column',
     }}>
       {isCover ? (
-        /* Cover slide mini-render */
-        <>
-          {coverPhotoUrl && (
-            <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />
-          )}
-          {/* Top accent bar */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: size === 'lg' ? 4 : 1.5, background: coverAccColor, zIndex: 1 }} />
-          <div style={{ padding: size === 'lg' ? '28px 32px' : '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
-            <div style={{ fontSize: size === 'lg' ? 11 : 5, color: coverDarkText ? 'rgba(37,47,62,0.5)' : 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: size === 'lg' ? 6 : 2 }}>Quarterly Business Review</div>
-            {logoUrl ? (
-              <img src={logoUrl} alt="" style={{ height: size === 'lg' ? 28 : 10, maxWidth: size === 'lg' ? 120 : 44, objectFit: 'contain', marginBottom: size === 'lg' ? 8 : 3 }} />
-            ) : (
-              <div style={{ fontSize: size === 'lg' ? 22 : 8, color: coverDarkText ? NAVY : '#fff', fontWeight: 800, letterSpacing: 1, marginBottom: size === 'lg' ? 8 : 3 }}>CLIENT NAME</div>
-            )}
-            <div style={{ width: size === 'lg' ? 48 : 16, height: size === 'lg' ? 3 : 1.5, background: coverAccColor, borderRadius: 1 }} />
-            <div style={{ fontSize: size === 'lg' ? 10 : 4, color: coverDarkText ? 'rgba(37,47,62,0.35)' : 'rgba(255,255,255,0.35)', marginTop: size === 'lg' ? 10 : 4 }}>Prepared by ShipHero</div>
-          </div>
-        </>
+        <CoverThumb
+          layout={coverLayout ?? 'A'}
+          size={size}
+          coverPhotoUrl={coverPhotoUrl}
+          logoUrl={logoUrl}
+          bg={coverBgColor}
+          accent={coverAccColor}
+          darkText={coverDarkText}
+          clientName={clientName}
+          reportingPeriod={reportingPeriod}
+        />
       ) : (
         <>
           {/* Title bar */}
@@ -876,6 +972,7 @@ export default function QBRDeckBuilder() {
   const [deckLogo, setDeckLogo]             = useState<string | undefined>(() => loadBuilderState().deckLogo);
   const [coverPhoto, setCoverPhoto]         = useState<string | undefined>(() => loadBuilderState().coverPhoto);
   const [coverColorScheme, setCoverColorScheme] = useState<CoverColorSchemeId>(() => loadBuilderState().coverColorScheme ?? 'navy');
+  const [coverLayout, setCoverLayout] = useState<'A' | 'B' | 'C'>(() => loadBuilderState().coverLayout ?? 'A');
   const [generateProgress, setGenerateProgress] = useState<string | null>(null);
   const [showPreflight, setShowPreflight]   = useState(false);
   const [showPreview, setShowPreview]       = useState(false);
@@ -894,8 +991,8 @@ export default function QBRDeckBuilder() {
 
   // ── Persist builder state ───────────────────────────────────────────────
   useEffect(() => {
-    saveBuilderState({ teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme });
-  }, [teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme]);
+    saveBuilderState({ teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme, coverLayout });
+  }, [teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme, coverLayout]);
 
   // ── Drag state ──────────────────────────────────────────────────────────
   const [dragIndex, setDragIndex]   = useState<number | null>(null);
@@ -1221,6 +1318,7 @@ export default function QBRDeckBuilder() {
         clientLogo: deckLogo || clientLogo || undefined,
         coverPhoto: coverPhoto || undefined,
         coverColorScheme: coverColorScheme !== 'navy' ? coverColorScheme : undefined,
+        coverLayout,
         enabledSections: sectionsWithSnapshots, teamMembers, kpis, customerStats, costGapRows, carrierMix,
         zoneComparisons, inventoryData, recommendedActions: displayActions.length > 0 ? displayActions : undefined,
         fontOption: selectedFont, statsRows: statsRows.length > 0 ? statsRows : undefined,
@@ -1495,6 +1593,8 @@ export default function QBRDeckBuilder() {
                           logoUrl={slide.id === 'cover' ? (deckLogo || clientLogo || undefined) : undefined}
                           coverBg={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.bg}
                           coverAccent={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.accent}
+                          coverLayout={slide.id === 'cover' ? coverLayout : undefined}
+                          clientName={slide.id === 'cover' ? clientName : undefined}
                         />
                       )}
                       {/* Hidden overlay */}
@@ -1643,6 +1743,9 @@ export default function QBRDeckBuilder() {
                     logoUrl={selectedKey === 'cover' ? (deckLogo || clientLogo || undefined) : undefined}
                     coverBg={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.bg}
                     coverAccent={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.accent}
+                    coverLayout={selectedKey === 'cover' ? coverLayout : undefined}
+                    clientName={selectedKey === 'cover' ? clientName : undefined}
+                    reportingPeriod={selectedKey === 'cover' ? reportingPeriod : undefined}
                   />
                 )}
 
@@ -2437,6 +2540,46 @@ export default function QBRDeckBuilder() {
                                   </svg>
                                 </div>
                               )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </SettingRow>
+
+                    {/* Cover layout */}
+                    <SettingRow label="Cover Layout" sub="Title page layout — works with any color scheme">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                        {(['A', 'B', 'C'] as const).map(opt => {
+                          const isActive = coverLayout === opt;
+                          const label = opt === 'A' ? 'Centered' : opt === 'B' ? 'Split' : 'Banner';
+                          const scheme = COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme) ?? COVER_COLOR_SCHEMES[0];
+                          return (
+                            <button
+                              key={opt}
+                              onClick={() => setCoverLayout(opt)}
+                              style={{
+                                position: 'relative',
+                                padding: 0, height: 78, borderRadius: 8, cursor: 'pointer',
+                                border: isActive ? `2.5px solid ${ORANGE}` : '1.5px solid #E5E7EB',
+                                background: '#fff', overflow: 'hidden',
+                                boxShadow: isActive ? `0 0 0 1px ${ORANGE}` : '0 1px 3px rgba(0,0,0,0.08)',
+                                transition: 'border-color 0.12s, box-shadow 0.12s',
+                              }}
+                            >
+                              <div style={{ position: 'absolute', inset: 4, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+                                <CoverThumb
+                                  layout={opt}
+                                  size="sm"
+                                  bg={scheme.bg}
+                                  accent={scheme.accent}
+                                  darkText={scheme.darkText}
+                                  logoUrl={deckLogo || clientLogo || undefined}
+                                  coverPhotoUrl={coverPhoto}
+                                  clientName={clientName}
+                                  reportingPeriod={reportingPeriod}
+                                />
+                              </div>
+                              <div style={{ position: 'absolute', bottom: 2, left: 0, right: 0, fontSize: 9, fontWeight: 700, color: isActive ? ORANGE : '#6B7280', textAlign: 'center' }}>{label}</div>
                             </button>
                           );
                         })}

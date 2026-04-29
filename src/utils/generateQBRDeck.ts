@@ -2,7 +2,7 @@ import PptxGenJS from 'pptxgenjs';
 import type { QBRDeckDocumentProps, DeckSectionKey, DeckSectionToggle, CustomDeckSlide, DataInstanceSlide } from '../components/pdf/QBRDeckDocument';
 import type { MonthlyStatRow } from './statsParser';
 import { dedupeWarehouseRows, formatMonth } from './statsParser';
-import shipheroWhiteUrl from '../assets/logos/shiphero-white.png?inline';
+import shipheroIsoUrl from '../assets/logos/shiphero-iso.png?inline';
 import { getIconDataUrl } from './deckIcons';
 import { COVER_COLOR_SCHEMES } from '../components/QBRDeckBuilder';
 import { applyKpiFilter } from './kpiSlideStats';
@@ -189,25 +189,22 @@ function addSlideMark(slide: PptxGenJS.Slide, num: number, dark = false) {
     line: { color: lineColor, width: 0.5 },
   });
 
-  // ShipHero logo — placed in the bottom-left footer strip
-  const logoH = 0.14;
-  const logoW = logoH * (320 / 84); // ≈ 0.533" (maintains 320×84 aspect ratio)
-  const logoBgColor = dark ? '3A4555' : '252F3E';
-  const logoX = 0.03, logoY = H - 0.21;
-
-  // Tiny navy background so the white logo is visible on both light and dark slides
-  slide.addShape('rect', {
-    x: logoX - 0.02, y: logoY - 0.02, w: logoW + 0.06, h: logoH + 0.04,
-    fill: { color: logoBgColor },
-    line: { color: logoBgColor },
-  });
-  slide.addImage({ data: shipheroWhiteUrl, x: logoX, y: logoY, w: logoW, h: logoH });
+  // ShipHero iso (big S) — bottom-left footer mark
+  const isoH = 0.22;
+  const isoW = isoH * (94 / 108); // ≈ 0.19" (maintains 94×108 aspect ratio)
+  const logoX = 0.05, logoY = H - 0.30;
+  slide.addImage({ data: shipheroIsoUrl, x: logoX, y: logoY, w: isoW, h: isoH });
 
   // Slide number — to the right of the logo
   slide.addText(String(num), {
-    x: logoX + logoW + 0.08, y: H - 0.2, w: 0.22, h: 0.16,
-    fontSize: 6, color: numColor, align: 'left',
+    x: logoX + isoW + 0.08, y: H - 0.27, w: 0.22, h: 0.18,
+    fontSize: 7, color: numColor, align: 'left',
   });
+
+  // ShipHero iso brand mark — top-right corner
+  const tmH = 0.32;
+  const tmW = tmH * (94 / 108);
+  slide.addImage({ data: shipheroIsoUrl, x: W - tmW - 0.25, y: 0.22, w: tmW, h: tmH });
 }
 
 // ── Section label + title + orange underline ───────────────────────────────────
@@ -328,125 +325,208 @@ function addCallout(
 // Slide builders
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: number) {
+/** Renders the client logo (or text fallback) into the given bounding box. */
+function placeClientLogo(
+  slide: PptxGenJS.Slide,
+  props: QBRDeckDocumentProps,
+  box: { x: number; y: number; w: number; h: number },
+  fallbackTextColor: string,
+  fallbackTextSize = 16,
+) {
+  if (props.clientLogo) {
+    const natural = readImageSize(props.clientLogo) ?? { w: 16, h: 9 };
+    const { x: ix, y: iy, w: iw, h: ih } = fitImage(natural.w, natural.h, box.x, box.y, box.w, box.h);
+    slide.addImage({ data: props.clientLogo, x: ix, y: iy, w: iw, h: ih });
+  } else {
+    slide.addText((props.clientName || 'CLIENT').toUpperCase(), {
+      x: box.x, y: box.y, w: box.w, h: box.h,
+      fontSize: fallbackTextSize, bold: true, color: fallbackTextColor,
+      align: 'center', valign: 'middle', charSpacing: 1.5,
+    });
+  }
+}
+
+function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, _num: number) {
   const slide = pptx.addSlide();
 
   // Resolve color scheme (strip '#' for pptxgenjs)
   const scheme    = COVER_COLOR_SCHEMES.find(s => s.id === props.coverColorScheme) ?? COVER_COLOR_SCHEMES[0];
   const bgHex     = scheme.bg.replace('#', '');
   const accentHex = scheme.accent.replace('#', '');
-  // On light backgrounds (white) use dark text; otherwise use white text
   const textHex   = scheme.darkText ? C.NAVY : C.WHITE;
   const subTextHex = scheme.darkText ? '6B7280' : 'AAAAAA';
-  const frameStroke = scheme.darkText ? '25252520' : 'FFFFFF12';
-  const frameFill   = scheme.darkText ? '25252506' : 'FFFFFF06';
-  const dividerColor = scheme.darkText ? '25252530' : 'FFFFFF20';
 
-  if (props.coverPhoto) {
-    slide.addImage({ data: props.coverPhoto, x: 0, y: 0, w: W, h: H, sizing: { type: 'cover', w: W, h: H } });
-    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex + 'CC' } as PptxGenJS.ShapeFillProps, line: { color: bgHex + '00' } });
+  // Iso logo aspect ratio: 94×108 ≈ 0.87:1 (slightly taller than wide)
+  const ISO_RATIO = 94 / 108;
+
+  const layout = props.coverLayout ?? 'A';
+
+  if (layout === 'A') {
+    // ── Layout A — Centered Hero ─────────────────────────────────────────────
+    if (props.coverPhoto) {
+      slide.addImage({ data: props.coverPhoto, x: 0, y: 0, w: W, h: H, sizing: { type: 'cover', w: W, h: H } });
+      slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex + 'CC' } as PptxGenJS.ShapeFillProps, line: { color: bgHex + '00' } });
+    } else {
+      slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex }, line: { color: bgHex } });
+    }
+    // Top + bottom accent bars
+    slide.addShape('rect', { x: 0, y: 0, w: W, h: 0.06, fill: { color: accentHex }, line: { color: accentHex } });
+    slide.addShape('rect', { x: 0, y: H - 0.04, w: W, h: 0.04, fill: { color: accentHex + '55' } as PptxGenJS.ShapeFillProps, line: { color: accentHex + '55' } });
+
+    // ShipHero iso logo — top-right corner brand mark
+    const isoH = 0.55;
+    const isoW = isoH * ISO_RATIO;
+    slide.addImage({ data: shipheroIsoUrl, x: W - isoW - 0.4, y: 0.32, w: isoW, h: isoH });
+
+    // Client logo — large, centered upper area
+    const LOGO_BOX = { x: (W - 5.2) / 2, y: 1.05, w: 5.2, h: 1.5 };
+    placeClientLogo(slide, props, LOGO_BOX, textHex, 22);
+
+    // Client name
+    const nameY = LOGO_BOX.y + LOGO_BOX.h + 0.25;
+    const clientNameFontSize = props.fontOption === 'A' ? 26 : props.fontOption === 'C' ? 36 : 31;
+    slide.addText(props.clientName || 'Client', {
+      x: 1, y: nameY, w: W - 2, h: 0.72,
+      fontSize: clientNameFontSize, bold: true, color: textHex,
+      align: 'center', valign: 'middle',
+    });
+    // Accent underline
+    const barW = 0.85;
+    slide.addShape('rect', {
+      x: (W - barW) / 2, y: nameY + 0.74, w: barW, h: 0.055,
+      fill: { color: accentHex }, line: { color: accentHex },
+    });
+    slide.addText('QUARTERLY BUSINESS REVIEW', {
+      x: 1, y: nameY + 0.84, w: W - 2, h: 0.26,
+      fontSize: 8.5, bold: true, color: subTextHex, charSpacing: 2, align: 'center',
+    });
+    if (props.reportingPeriod) {
+      slide.addText(props.reportingPeriod, {
+        x: 1, y: nameY + 1.13, w: W - 2, h: 0.28,
+        fontSize: 13, bold: true, color: accentHex, align: 'center',
+      });
+    }
+    slide.addText(props.reportDate.toUpperCase(), {
+      x: 0.45, y: H - 0.32, w: 3.5, h: 0.2,
+      fontSize: 7.5, bold: true, color: scheme.darkText ? C.NAVY : C.BLUE, charSpacing: 1.5,
+    });
+    slide.addText('Confidential — ShipHero', {
+      x: W - 3.5, y: H - 0.32, w: 3.0, h: 0.2,
+      fontSize: 7, color: subTextHex, align: 'right',
+    });
+  } else if (layout === 'B') {
+    // ── Layout B — Split Panel ──────────────────────────────────────────────
+    // Left: branded color/photo. Right: white panel with client info.
+    const SPLIT_X = W * 0.42;
+
+    if (props.coverPhoto) {
+      slide.addImage({ data: props.coverPhoto, x: 0, y: 0, w: SPLIT_X, h: H, sizing: { type: 'cover', w: SPLIT_X, h: H } });
+      slide.addShape('rect', { x: 0, y: 0, w: SPLIT_X, h: H, fill: { color: bgHex + 'BB' } as PptxGenJS.ShapeFillProps, line: { color: bgHex + '00' } });
+    } else {
+      slide.addShape('rect', { x: 0, y: 0, w: SPLIT_X, h: H, fill: { color: bgHex }, line: { color: bgHex } });
+    }
+    slide.addShape('rect', { x: SPLIT_X, y: 0, w: W - SPLIT_X, h: H, fill: { color: 'FFFFFF' }, line: { color: 'FFFFFF' } });
+    // Vertical accent stripe at the split
+    slide.addShape('rect', { x: SPLIT_X - 0.04, y: 0, w: 0.08, h: H, fill: { color: accentHex }, line: { color: accentHex } });
+
+    // ShipHero iso (white S) on left panel — large, centered
+    const isoH = 1.6;
+    const isoW = isoH * ISO_RATIO;
+    slide.addImage({ data: shipheroIsoUrl, x: (SPLIT_X - isoW) / 2, y: (H - isoH) / 2 - 0.35, w: isoW, h: isoH });
+    // "QBR" wordmark on left panel
+    slide.addText('QUARTERLY\nBUSINESS\nREVIEW', {
+      x: 0.4, y: (H - isoH) / 2 + isoH - 0.2, w: SPLIT_X - 0.8, h: 1.0,
+      fontSize: 11, bold: true, color: textHex, charSpacing: 2, align: 'center', lineSpacingMultiple: 1.25,
+    });
+
+    // Right panel content
+    const RX = SPLIT_X + 0.6;
+    const RW = W - RX - 0.5;
+    // Section label
+    slide.addText('PREPARED FOR', {
+      x: RX, y: 1.05, w: RW, h: 0.22,
+      fontSize: 8, bold: true, color: C.BLUE, charSpacing: 2,
+    });
+    // Client logo
+    placeClientLogo(slide, props, { x: RX, y: 1.32, w: RW, h: 1.05 }, C.NAVY, 18);
+    // Client name
+    const nameFs = props.fontOption === 'A' ? 22 : props.fontOption === 'C' ? 30 : 26;
+    slide.addText(props.clientName || 'Client', {
+      x: RX, y: 2.5, w: RW, h: 0.66,
+      fontSize: nameFs, bold: true, color: C.NAVY,
+    });
+    // Accent underline
+    slide.addShape('rect', { x: RX, y: 3.18, w: 0.85, h: 0.05, fill: { color: accentHex }, line: { color: accentHex } });
+    if (props.reportingPeriod) {
+      slide.addText(props.reportingPeriod, {
+        x: RX, y: 3.35, w: RW, h: 0.32,
+        fontSize: 14, bold: true, color: accentHex,
+      });
+    }
+    slide.addText(props.reportDate.toUpperCase(), {
+      x: RX, y: 3.78, w: RW, h: 0.22,
+      fontSize: 8, bold: true, color: '6B7280', charSpacing: 1.5,
+    });
+    slide.addText('Confidential — ShipHero', {
+      x: RX, y: H - 0.32, w: RW, h: 0.2,
+      fontSize: 7, color: '9CA3AF',
+    });
   } else {
-    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: bgHex }, line: { color: bgHex } });
-  }
+    // ── Layout C — Banner Top ────────────────────────────────────────────────
+    const BANNER_H = H * 0.38;
+    if (props.coverPhoto) {
+      slide.addImage({ data: props.coverPhoto, x: 0, y: 0, w: W, h: BANNER_H, sizing: { type: 'cover', w: W, h: BANNER_H } });
+      slide.addShape('rect', { x: 0, y: 0, w: W, h: BANNER_H, fill: { color: bgHex + 'CC' } as PptxGenJS.ShapeFillProps, line: { color: bgHex + '00' } });
+    } else {
+      slide.addShape('rect', { x: 0, y: 0, w: W, h: BANNER_H, fill: { color: bgHex }, line: { color: bgHex } });
+    }
+    slide.addShape('rect', { x: 0, y: BANNER_H, w: W, h: H - BANNER_H, fill: { color: 'FFFFFF' }, line: { color: 'FFFFFF' } });
+    // Accent stripe at the seam
+    slide.addShape('rect', { x: 0, y: BANNER_H - 0.04, w: W, h: 0.08, fill: { color: accentHex }, line: { color: accentHex } });
 
-  // Top accent bar
-  slide.addShape('rect', { x: 0, y: 0, w: W, h: 0.06, fill: { color: accentHex }, line: { color: accentHex } });
+    // ShipHero iso — banner left
+    const isoH = 0.85;
+    const isoW = isoH * ISO_RATIO;
+    slide.addImage({ data: shipheroIsoUrl, x: 0.5, y: (BANNER_H - isoH) / 2, w: isoW, h: isoH });
+    // Banner title
+    slide.addText('QUARTERLY BUSINESS REVIEW', {
+      x: 0.5 + isoW + 0.3, y: BANNER_H / 2 - 0.32, w: W - (isoW + 1.5), h: 0.3,
+      fontSize: 11, bold: true, color: textHex, charSpacing: 3,
+    });
+    if (props.reportingPeriod) {
+      slide.addText(props.reportingPeriod, {
+        x: 0.5 + isoW + 0.3, y: BANNER_H / 2, w: W - (isoW + 1.5), h: 0.4,
+        fontSize: 22, bold: true, color: textHex,
+      });
+    }
+    // Date — banner right
+    slide.addText(props.reportDate.toUpperCase(), {
+      x: W - 2.5, y: BANNER_H / 2 - 0.15, w: 2.0, h: 0.25,
+      fontSize: 8.5, bold: true, color: textHex, charSpacing: 1.5, align: 'right',
+    });
 
-  // Bottom accent bar (subtle)
-  slide.addShape('rect', { x: 0, y: H - 0.04, w: W, h: 0.04, fill: { color: accentHex + '55' } as PptxGenJS.ShapeFillProps, line: { color: accentHex + '55' } });
-
-  // ── Logo row (centered, framed box) ────────────────────────────────────────
-  // ShipHero white logo: 320×84 → aspect 3.81:1
-  const shH = 0.52;
-  const shW = shH * (320 / 84);   // ≈ 1.98"
-
-  // Logo frame: holds both logos side-by-side
-  // Left half: ShipHero | Divider | Right half: client logo
-  const BOX_W = 6.4, BOX_H = 1.3;
-  const BOX_X = (W - BOX_W) / 2;  // centered horizontally
-  const BOX_Y = 0.88;
-
-  // Frame background + border
-  slide.addShape('rect', {
-    x: BOX_X, y: BOX_Y, w: BOX_W, h: BOX_H,
-    fill: { color: frameFill } as PptxGenJS.ShapeFillProps,
-    line: { color: frameStroke, width: 0.75 },
-    rectRadius: 0.12,
-  });
-
-  // ShipHero logo — use white version on dark bg, colored version on white bg
-  slide.addImage({ data: shipheroWhiteUrl, x: BOX_X + (BOX_W / 2 - shW) / 2, y: BOX_Y + (BOX_H - shH) / 2, w: shW, h: shH });
-
-  // Vertical divider between logos
-  const divX = BOX_X + BOX_W / 2;
-  slide.addShape('line', {
-    x: divX, y: BOX_Y + 0.18, w: 0, h: BOX_H - 0.36,
-    line: { color: dividerColor, width: 0.75 },
-  });
-
-  // Client logo — right half of box
-  const LOGO_X = divX + 0.15;
-  const LOGO_Y = BOX_Y + 0.12;
-  const LOGO_W = BOX_W / 2 - 0.3;
-  const LOGO_H = BOX_H - 0.24;
-
-  if (props.clientLogo) {
-    const natural = readImageSize(props.clientLogo) ?? { w: 16, h: 9 };
-    const PADDING = 0.1;
-    const { x: ix, y: iy, w: iw, h: ih } = fitImage(
-      natural.w, natural.h,
-      LOGO_X + PADDING, LOGO_Y + PADDING,
-      LOGO_W - PADDING * 2, LOGO_H - PADDING * 2,
-    );
-    slide.addImage({ data: props.clientLogo, x: ix, y: iy, w: iw, h: ih });
-  } else {
-    // Fallback: brand name text
-    slide.addText((props.clientName || 'CLIENT').toUpperCase(), {
-      x: LOGO_X, y: LOGO_Y, w: LOGO_W, h: LOGO_H,
-      fontSize: 16, bold: true, color: textHex,
-      align: 'center', valign: 'middle', charSpacing: 1.5,
+    // Lower section — large client logo + name
+    const lowerY = BANNER_H + 0.35;
+    const lowerH = H - BANNER_H - 0.7;
+    // Client logo box (top half of lower)
+    placeClientLogo(slide, props, { x: (W - 5.5) / 2, y: lowerY, w: 5.5, h: lowerH * 0.6 }, C.NAVY, 22);
+    // Client name (lower half)
+    const nameFs = props.fontOption === 'A' ? 24 : props.fontOption === 'C' ? 34 : 29;
+    slide.addText(props.clientName || 'Client', {
+      x: 1, y: lowerY + lowerH * 0.62, w: W - 2, h: 0.56,
+      fontSize: nameFs, bold: true, color: C.NAVY, align: 'center', valign: 'middle',
+    });
+    // Accent underline
+    const barW = 0.85;
+    slide.addShape('rect', {
+      x: (W - barW) / 2, y: lowerY + lowerH * 0.62 + 0.6, w: barW, h: 0.05,
+      fill: { color: accentHex }, line: { color: accentHex },
+    });
+    slide.addText('Confidential — ShipHero', {
+      x: 0, y: H - 0.28, w: W, h: 0.2,
+      fontSize: 7, color: '9CA3AF', align: 'center',
     });
   }
-
-  // ── Client name ────────────────────────────────────────────────────────────
-  const nameY = BOX_Y + BOX_H + 0.26;
-  const clientNameFontSize = props.fontOption === 'A' ? 26 : props.fontOption === 'C' ? 36 : 31;
-  slide.addText(props.clientName || 'Client', {
-    x: 1, y: nameY, w: W - 2, h: 0.72,
-    fontSize: clientNameFontSize, bold: true, color: textHex,
-    align: 'center', valign: 'middle',
-  });
-
-  // Accent underline — centered
-  const barW = 0.85;
-  slide.addShape('rect', {
-    x: (W - barW) / 2, y: nameY + 0.74, w: barW, h: 0.055,
-    fill: { color: accentHex }, line: { color: accentHex },
-  });
-
-  // QBR label
-  slide.addText('QUARTERLY BUSINESS REVIEW', {
-    x: 1, y: nameY + 0.84, w: W - 2, h: 0.26,
-    fontSize: 8.5, bold: true, color: subTextHex, charSpacing: 2, align: 'center',
-  });
-
-  // Reporting period
-  if (props.reportingPeriod) {
-    slide.addText(props.reportingPeriod, {
-      x: 1, y: nameY + 1.13, w: W - 2, h: 0.28,
-      fontSize: 13, bold: true, color: accentHex, align: 'center',
-    });
-  }
-
-  // ── Bottom bar ──────────────────────────────────────────────────────────────
-  slide.addText(props.reportDate.toUpperCase(), {
-    x: 0.45, y: H - 0.32, w: 3.5, h: 0.2,
-    fontSize: 7.5, bold: true, color: scheme.darkText ? C.NAVY : C.BLUE, charSpacing: 1.5,
-  });
-  slide.addText('Confidential — ShipHero', {
-    x: W - 3.5, y: H - 0.32, w: 3.0, h: 0.2,
-    fontSize: 7, color: subTextHex, align: 'right',
-  });
 }
 
 function buildAgendaSlide(

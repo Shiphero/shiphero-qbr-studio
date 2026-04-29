@@ -150,6 +150,7 @@ export interface QBRDeckDocumentProps {
   fontOption?: 'A' | 'B' | 'C';
   coverPhoto?: string;  // base64 background image for cover slide
   coverColorScheme?: string;  // e.g. 'midnight', 'forest' — mapped to hex in generator
+  coverLayout?: 'A' | 'B' | 'C';  // title page layout variant
   statsRows?: import('../../utils/statsParser').MonthlyStatRow[];
   customSlides?: CustomDeckSlide[];
   dataInstances?: DataInstanceSlide[];
