@@ -1393,6 +1393,119 @@ function buildInsightSlide(
   if (internalNotes) slide.addNotes(internalNotes);
 }
 
+// ── KPI tile data extractor ────────────────────────────────────────────────────
+/**
+ * Returns the unfiltered KPI tile list for any of the 7 combinable KPI summary
+ * sections, computed from the data already on `props`. Used by the combined-slide
+ * builder so it can render two KPI sections natively side-by-side instead of
+ * embedding two whole slide screenshots (which look like a slide-inside-a-slide).
+ *
+ * Mirrors the per-case computation in the main slide-emission switch — keep these
+ * in sync if the per-section cases change.
+ */
+type KpiTile = { id: string; label: string; value: string; color?: string };
+export function tilesForKpiSection(
+  key: DeckSectionKey,
+  props: QBRDeckDocumentProps,
+): { tiles: KpiTile[]; missingReason?: string } {
+  switch (key) {
+    case 'accountOverview':
+    case 'shippingKPIs': {
+      const { kpis } = props;
+      if (!kpis) return { tiles: [], missingReason: 'No shipments data' };
+      return { tiles: [
+        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Cost/Ship',    value: fmt$(kpis.avgLabelCost) },
+        { id: 'accounts',       label: 'Accounts',         value: fmtN(kpis.uniqueAccounts) },
+        ...(kpis.avgZone !== null    ? [{ id: 'avgZone',     label: 'Avg Zone',     value: kpis.avgZone.toFixed(1) }] : []),
+        ...(kpis.totalCharged > 0    ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+      ] };
+    }
+    case 'inventoryKPIs': {
+      const { inventoryData } = props;
+      if (!inventoryData) return { tiles: [], missingReason: 'No inventory data' };
+      const loc = inventoryData.locRows ?? [];
+      const skuSet = new Set(loc.map(r => `${r.client}::${r.sku}`));
+      const totalUnits = loc.filter(r => r.pickable && r.sellable).reduce((s, r) => s + r.units, 0);
+      const expiring90 = loc.filter(r => r.hasLot && r.daysToExpire !== null && (r.daysToExpire as number) <= 90).length;
+      const movingDOH  = inventoryData.daysOnHand.filter(r => r.doh !== null);
+      const avgDOHVal  = movingDOH.length ? Math.round(movingDOH.reduce((s, r) => s + r.doh!, 0) / movingDOH.length) : null;
+      const manualAdj  = inventoryData.manualAdjRows?.length ?? 0;
+      return { tiles: [
+        { id: 'activeSkus', label: 'Active SKUs',           value: loc.length ? fmtN(skuSet.size) : '—' },
+        { id: 'totalUnits', label: 'Total Units on Hand',   value: loc.length ? fmtN(totalUnits)  : '—' },
+        { id: 'expiring90', label: 'Expiring < 90 Days',    value: loc.length ? fmtN(expiring90)  : '—', color: expiring90 > 0 ? C.RED : C.NAVY },
+        { id: 'avgDOH',     label: 'Avg Days on Hand',      value: avgDOHVal !== null ? `${avgDOHVal}d` : '—' },
+        { id: 'manualAdj',  label: 'Manual Adjustments',    value: fmtN(manualAdj) },
+      ] };
+    }
+    case 'rateCardKPIs': {
+      const { zoneComparisons } = props;
+      if (!zoneComparisons.length) return { tiles: [], missingReason: 'No rate card data' };
+      const total      = zoneComparisons.reduce((a, b) => a + b.shipmentCount, 0);
+      const mrcTotal   = zoneComparisons.reduce((a, b) => a + b.rateCardAvg * b.shipmentCount, 0);
+      const actTotal   = zoneComparisons.reduce((a, b) => a + b.actualAvg   * b.shipmentCount, 0);
+      const totalDelta = actTotal - mrcTotal;
+      const wDelta     = zoneComparisons.reduce((a, b) => a + b.delta * b.shipmentCount, 0) / (total || 1);
+      return { tiles: [
+        { id: 'totalShipments', label: 'Shipments Analyzed', value: fmtN(total) },
+        { id: 'mrcTotal',       label: 'ShipHero MRC Total', value: fmtK(mrcTotal) },
+        { id: 'actualTotal',    label: 'Actual Total Paid',  value: fmtK(actTotal) },
+        { id: 'totalDelta',     label: 'Total Delta',        value: `${totalDelta >= 0 ? '+' : ''}${fmtK(totalDelta)}`, color: totalDelta > 0.01 ? C.RED : C.GREEN },
+        { id: 'zonesAnalyzed',  label: 'Zones Analyzed',     value: `${zoneComparisons.length}` },
+        { id: 'avgRateDelta',   label: 'Avg Rate Delta',     value: `${wDelta >= 0 ? '+' : ''}$${wDelta.toFixed(2)}`, color: wDelta > 0 ? C.RED : C.GREEN },
+        { id: 'zonesAboveMRC',  label: 'Zones Above MRC',    value: `${zoneComparisons.filter(z => z.delta > 0).length}` },
+      ] };
+    }
+    case 'threePlKPIs': {
+      const { kpis, customerStats } = props;
+      if (!kpis) return { tiles: [], missingReason: 'No shipments data' };
+      return { tiles: [
+        { id: '3plAccounts',    label: '3PL Accounts',     value: fmtN(kpis.uniqueAccounts) },
+        { id: 'totalShipments', label: 'Total Shipments',  value: fmtN(kpis.totalShipments) },
+        { id: 'totalLabelCost', label: 'Total Label Cost', value: fmtK(kpis.totalLabelCost) },
+        { id: 'avgLabelCost',   label: 'Avg Label Cost',   value: fmt$(kpis.avgLabelCost) },
+        ...(kpis.totalCharged > 0 ? [{ id: 'totalBilled', label: 'Total Billed', value: fmtK(kpis.totalCharged) }] : []),
+        ...(customerStats[0]      ? [{ id: 'topAccount',  label: 'Top Account',  value: trunc(customerStats[0].customer, 16) }] : []),
+      ] };
+    }
+    case 'accountHealthKPIs': {
+      const statsRows = props.statsRows ?? [];
+      const deduped   = dedupeWarehouseRows(statsRows);
+      if (!deduped.length) return { tiles: [], missingReason: 'No statistics data' };
+      const t = deduped.reduce((acc, r) => ({
+        orders: acc.orders + r.orderCount,
+        labels: acc.labels + r.labelCount,
+        spend:  acc.spend  + r.carrierSpend,
+        gmv:    acc.gmv    + r.gmv,
+      }), { orders: 0, labels: 0, spend: 0, gmv: 0 });
+      return { tiles: [
+        { id: 'orders',       label: 'Orders',         value: fmtN(t.orders) },
+        { id: 'labels',       label: 'Labels',         value: fmtN(t.labels) },
+        { id: 'carrierSpend', label: 'Carrier Spend',  value: fmtK(t.spend) },
+        { id: 'gmv',          label: 'GMV',            value: fmtK(t.gmv) },
+      ] };
+    }
+    case 'priorQuarterKPIs': {
+      const { kpis, priorPeriod } = props;
+      if (!kpis || !priorPeriod) return { tiles: [], missingReason: 'No prior-period data' };
+      const shipDelta  = kpis.totalShipments - priorPeriod.totalShipments;
+      const spendDelta = kpis.totalLabelCost  - priorPeriod.totalSpend;
+      const costDelta  = kpis.avgLabelCost    - priorPeriod.avgLabelCost;
+      const pctStr = (d: number, base: number) => base === 0 ? '—' : `${d >= 0 ? '+' : ''}${((d / base) * 100).toFixed(1)}%`;
+      return { tiles: [
+        { id: 'shipmentsChange', label: 'Shipments Δ',  value: `${shipDelta >= 0 ? '+' : ''}${fmtN(shipDelta)}`,        color: shipDelta >= 0 ? C.GREEN : C.RED },
+        { id: 'spendChange',     label: 'Spend Δ',      value: `${spendDelta >= 0 ? '+' : ''}${fmtK(spendDelta)}`,      color: spendDelta <= 0 ? C.GREEN : C.RED },
+        { id: 'avgCostChange',   label: 'Avg Cost Δ',   value: `${costDelta >= 0 ? '+' : ''}$${costDelta.toFixed(2)}`,  color: costDelta <= 0 ? C.GREEN : C.RED },
+        { id: 'priorPeriod',     label: 'Prior Period',       value: pctStr(shipDelta, priorPeriod.totalShipments) },
+      ] };
+    }
+    default:
+      return { tiles: [], missingReason: 'Section not combinable' };
+  }
+}
+
 // ── Generic KPI tiles slide ────────────────────────────────────────────────────
 /**
  * Renders a slide with a grid of KPI stat tiles and puts insight fields in speaker notes.
@@ -2157,78 +2270,73 @@ export async function generateQBRDeck(
   }
 
   // ── Combined slide builder ───────────────────────────────────────────────
-  // Two-column slide pairing two KPI summary sections. Each column is the
-  // captured snapshot of the source section, scaled to half-width.
-  // The slide title is editable; the orange underline mirrors the standard slide
-  // title style; sidebar mark + slide number drawn natively.
+  // Two-column slide pairing two KPI summary sections. Renders KPI tiles
+  // natively in two half-width columns under a single shared title — looks
+  // visually consistent with single-section KPI slides (same tile chrome,
+  // same slide background, same sidebar mark).
   const buildCombinedSlide = (cb: import('../components/pdf/QBRDeckDocument').CombinedSlide, num: number) => {
     const slide = pptx.addSlide();
-    // Background
     slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG } });
+    addSlideMark(slide, num);
 
-    // Header
-    const HX = 0.78, HY = 0.55;
-    if (cb.sectionLabel) {
-      slide.addText(cb.sectionLabel.toUpperCase(), {
-        x: HX, y: HY, w: 8.5, h: 0.20,
-        fontSize: 13, bold: true, color: C.BLUE, charSpacing: 1.5,
-      });
-    } else {
-      slide.addText('COMBINED', {
-        x: HX, y: HY, w: 8.5, h: 0.20,
-        fontSize: 13, bold: true, color: C.BLUE, charSpacing: 1.5,
-      });
-    }
-    slide.addText(cb.title || 'Combined Slide', {
-      x: HX, y: HY + 0.22, w: 8.5, h: 0.55,
-      fontSize: 26, bold: true, color: C.DARK,
-    });
-    slide.addShape('rect', {
-      x: HX, y: HY + 0.76, w: 1.4, h: 0.04,
-      fill: { color: C.ORANGE }, line: { color: C.ORANGE },
-    });
+    // Standard slide title (matches addSlideTitle layout used by all data slides)
+    addSlideTitle(slide, cb.sectionLabel || 'COMBINED', cb.title || 'Combined Slide', 0.78, 0.55);
 
-    // Column area: 2 columns under the title
-    const COL_TOP    = 1.55;
-    const COL_BOTTOM = H - 0.4;
-    const COL_GAP    = 0.18;
-    const COL_LEFT_X = 0.78;
-    const COL_RIGHT_END = W - 0.3;
+    // Column area
+    const COL_TOP    = 1.65;
+    const COL_BOTTOM = H - 0.45;
+    const COL_GAP    = 0.20;
+    const COL_LEFT_X = 0.48;
+    const COL_RIGHT_END = W - 0.30;
     const totalW     = COL_RIGHT_END - COL_LEFT_X;
     const colW       = (totalW - COL_GAP) / 2;
     const colH       = COL_BOTTOM - COL_TOP;
 
-    const renderColumn = (snapshot: string | undefined, key: import('../components/pdf/QBRDeckDocument').DeckSectionKey | undefined, x: number) => {
-      // Card background
-      slide.addShape('rect', {
-        x, y: COL_TOP, w: colW, h: colH,
-        fill: { color: C.WHITE }, line: { color: 'E5E7EB', width: 0.5 },
-        rectRadius: 0.06,
-      });
-      if (snapshot && !isBlankSnapshot(snapshot)) {
-        // Snapshot is captured at full slide aspect (10×5.625). Fit into the column box
-        // preserving aspect; this preserves the table/chart look from the builder.
-        const PAD = 0.08;
-        const fitted = fitImage(1920, 1080, x + PAD, COL_TOP + PAD, colW - 2 * PAD, colH - 2 * PAD);
-        slide.addImage({ data: snapshot, ...fitted });
-      } else if (key) {
-        slide.addText(SECTION_LABELS_LOCAL[key], {
-          x: x + 0.15, y: COL_TOP + colH / 2 - 0.2, w: colW - 0.3, h: 0.4,
-          fontSize: 11, color: C.GRAY, align: 'center',
+    const renderColumn = (key: import('../components/pdf/QBRDeckDocument').DeckSectionKey | undefined, x: number) => {
+      // Column subtitle (the source section's name)
+      if (key) {
+        slide.addText(SECTION_LABELS_LOCAL[key].toUpperCase(), {
+          x, y: COL_TOP, w: colW, h: 0.18,
+          fontSize: 8.5, bold: true, color: C.BLUE, charSpacing: 1.5,
         });
-      } else {
-        slide.addText('No section selected', {
-          x: x + 0.15, y: COL_TOP + colH / 2 - 0.2, w: colW - 0.3, h: 0.4,
-          fontSize: 11, color: C.GRAY, italic: true, align: 'center',
+        // Thin underline on the column subtitle
+        slide.addShape('rect', {
+          x, y: COL_TOP + 0.20, w: 0.5, h: 0.02,
+          fill: { color: C.ORANGE }, line: { color: C.ORANGE },
         });
       }
+
+      // Tile grid — half-width, 2 cols of tiles per side
+      const result = key ? tilesForKpiSection(key, props) : { tiles: [] as KpiTile[], missingReason: 'No section selected' };
+      // Apply per-source kpiFilter from the section toggle if any
+      const sectionToggle = key ? props.enabledSections.find(s => s.key === key) : undefined;
+      const tiles = applyKpiFilter(result.tiles, sectionToggle?.kpiFilter);
+
+      if (tiles.length === 0) {
+        slide.addText(result.missingReason || 'No data', {
+          x: x + 0.05, y: COL_TOP + 0.7, w: colW - 0.1, h: 0.4,
+          fontSize: 11, italic: true, color: C.GRAY, align: 'center',
+        });
+        return;
+      }
+
+      const TILE_TOP = COL_TOP + 0.42;
+      const TILE_GAP = 0.08;
+      const TILE_W   = (colW - TILE_GAP) / 2;
+      const TILE_H   = 0.62;
+
+      tiles.forEach((tile, i) => {
+        const tcol = i % 2;
+        const trow = Math.floor(i / 2);
+        const tx   = x + tcol * (TILE_W + TILE_GAP);
+        const ty   = TILE_TOP + trow * (TILE_H + TILE_GAP);
+        if (ty + TILE_H > COL_TOP + colH) return; // overflow guard
+        addKpiTile(slide, tile.label.toUpperCase(), tile.value, tx, ty, TILE_W, TILE_H, tile.color ?? C.NAVY);
+      });
     };
 
-    renderColumn(cb.leftSnapshot,  cb.leftKey,  COL_LEFT_X);
-    renderColumn(cb.rightSnapshot, cb.rightKey, COL_LEFT_X + colW + COL_GAP);
-
-    // Sidebar mark + slide number
-    addSlideMark(slide, num);
+    renderColumn(cb.leftKey,  COL_LEFT_X);
+    renderColumn(cb.rightKey, COL_LEFT_X + colW + COL_GAP);
 
     if (cb.narrative?.trim()) addNarrativeOverlay(slide, cb.narrative);
     if (cb.notes) slide.addNotes(cb.notes);

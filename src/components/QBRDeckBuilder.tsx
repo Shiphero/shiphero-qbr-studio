@@ -22,7 +22,7 @@ import type { CustomDeckSlide } from '../context/DeckContext';
 import shipheroIsoUrl from '../assets/logos/shiphero-iso.png';
 import { TEAM_MEMBER_PRESETS } from '../data/teamMemberPresets';
 import { useDeck, SECTION_ORDER, SECTION_LABELS } from '../context/DeckContext';
-import { LiveSlidePreview, ScaledSlidePreview } from './LiveSlidePreview';
+import { LiveSlidePreview, ScaledSlidePreview, SlideContent } from './LiveSlidePreview';
 import { CALLOUT_ICONS, getIconDataUrl } from '../utils/deckIcons';
 import type { SlidePreviewData } from './LiveSlidePreview';
 import DeckPreviewModal from './DeckPreviewModal';
@@ -739,11 +739,12 @@ function SlideEditText({ field, value, placeholder, onSave, isEditing, onStart, 
   );
 }
 
-// ─── Combined slide preview (2 column KPI pair) ──────────────────────────
+// ─── Combined slide preview (2 column KPI pair, native rendering) ────────
 /**
- * Renders a combined slide: an editable title bar across the top, then two
- * columns showing scaled-down LiveSlidePreviews of the source sections.
- * The two columns share the same canvas dimensions as a normal slide.
+ * Mirrors generateQBRDeck.buildCombinedSlide: a single shared title at top,
+ * orange underline, then two columns of native KPI tiles (via SlideContent).
+ * No "slide-inside-a-slide" — looks visually consistent with single-section
+ * KPI slides in the deck.
  */
 function CombinedSlidePreview({
   slide, previewData, width = 480,
@@ -752,36 +753,49 @@ function CombinedSlidePreview({
   previewData: SlidePreviewData;
   width?: number;
 }) {
-  const H = Math.round(width * 9 / 16);
-  const colW = Math.round((width - 36) / 2);
-  return (
-    <div style={{ width, height: H, background: '#EDEEF2', borderRadius: 6, position: 'relative', flexShrink: 0, overflow: 'hidden', border: '1px solid #E5E7EB' }}>
-      {/* Sidebar mark */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 14, background: '#252F3E' }} />
-      <div style={{ position: 'absolute', top: 4, left: 4, width: 6, height: 6, background: '#EF5252', transform: 'rotate(45deg)' }} />
+  const H  = Math.round(width * 9 / 16);
+  const sc = width / 10;
+  const sbW = Math.round(0.3 * sc);
+  // Title coordinates match LiveSlidePreview header layout
+  const titleX = Math.round(0.78 * sc);
+  const titleY = Math.round(0.55 * sc);
+  const colTopY = Math.round(1.65 * sc);
+  const colGap = Math.round(0.20 * sc);
+  const colInnerLeft  = Math.round(0.48 * sc);
+  const colInnerRight = width - Math.round(0.30 * sc);
+  const totalW = colInnerRight - colInnerLeft;
+  const colW   = Math.round((totalW - colGap) / 2);
 
-      {/* Combined title */}
-      <div style={{ paddingLeft: 22, paddingRight: 12, paddingTop: 10, paddingBottom: 4 }}>
-        <div style={{ fontSize: 8, fontWeight: 700, color: '#4472E8', letterSpacing: 1.5 }}>COMBINED</div>
-        <div style={{ fontSize: 14, fontWeight: 800, color: '#1C1C2E', marginTop: 2, lineHeight: 1.15 }}>{slide.title || 'Combined Slide'}</div>
-        <div style={{ width: 50, height: 2, background: '#EF5252', marginTop: 4 }} />
+  return (
+    <div style={{ width, height: H, background: '#EDEEF2', borderRadius: 6, position: 'relative', flexShrink: 0, overflow: 'hidden', border: '1px solid #E5E7EB', fontFamily: FONT }}>
+      {/* Sidebar mark */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: sbW, background: NAVY }} />
+      <div style={{ position: 'absolute', top: 6, left: 6, width: 8, height: 8, background: '#EF5252', transform: 'rotate(45deg)' }} />
+
+      {/* Shared title */}
+      <div style={{ position: 'absolute', left: titleX, top: titleY, right: 12 }}>
+        <div style={{ fontSize: Math.round(sc * 0.13), fontWeight: 700, color: '#4472E8', letterSpacing: 1.5 }}>{(slide.sectionLabel || 'COMBINED').toUpperCase()}</div>
+        <div style={{ fontSize: Math.round(sc * 0.32), fontWeight: 800, color: '#1C1C2E', marginTop: 2, lineHeight: 1.1 }}>{slide.title || 'Combined Slide'}</div>
+        <div style={{ width: Math.round(sc * 1.4), height: Math.round(sc * 0.04), background: '#EF5252', marginTop: 4 }} />
       </div>
 
-      {/* Two column area */}
-      <div style={{ position: 'absolute', left: 22, right: 12, top: 60, bottom: 12, display: 'flex', gap: 8 }}>
+      {/* Two columns */}
+      <div style={{ position: 'absolute', left: colInnerLeft, top: colTopY, right: width - colInnerRight, bottom: 16, display: 'flex', gap: colGap }}>
         {[slide.leftKey, slide.rightKey].map((key, i) => (
-          <div key={i} style={{ flex: 1, background: '#fff', borderRadius: 4, border: '1px solid #E5E7EB', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div key={i} style={{ width: colW, display: 'flex', flexDirection: 'column' }}>
+            {/* Column subtitle */}
             {key ? (
-              <ScaledSlidePreview
-                sectionKey={key}
-                label={SECTION_LABELS[key]}
-                data={previewData}
-                displayWidth={colW}
-                nativeWidth={480}
-                borderRadius={0}
-              />
+              <>
+                <div style={{ fontSize: Math.round(sc * 0.10), fontWeight: 700, color: '#4472E8', letterSpacing: 1.2 }}>
+                  {SECTION_LABELS[key].toUpperCase()}
+                </div>
+                <div style={{ width: Math.round(sc * 0.5), height: 2, background: '#EF5252', marginTop: 3 }} />
+                <div style={{ marginTop: 8, flex: 1, overflow: 'hidden' }}>
+                  <SlideContent sectionKey={key} data={previewData} W={colW} H={H - colTopY - 28} />
+                </div>
+              </>
             ) : (
-              <div style={{ fontSize: 11, color: '#9CA3AF', padding: 8, textAlign: 'center' }}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF', textAlign: 'center', border: '1px dashed #D1D5DB', borderRadius: 6 }}>
                 Pick a section for {i === 0 ? 'left' : 'right'} column
               </div>
             )}
@@ -1393,25 +1407,8 @@ export default function QBRDeckBuilder() {
         })
       );
 
-      // Capture left/right snapshots for combined slides
-      const enabledCombined = combinedSlides.filter(c => c.enabled && !c.hidden);
-      const combinedWithSnapshots: typeof combinedSlides = await Promise.all(
-        enabledCombined.map(async cb => {
-          const out = { ...cb };
-          for (const side of ['leftKey', 'rightKey'] as const) {
-            const key = cb[side];
-            if (!key || SKIP_SNAPSHOT.has(key)) continue;
-            try {
-              const png = await snapshotSection(key, SECTION_LABELS[key], previewData, snapshotContainerRef);
-              if (png && !isBlankSnapshot(png)) {
-                if (side === 'leftKey') out.leftSnapshot = png;
-                else                    out.rightSnapshot = png;
-              }
-            } catch { /* ignore */ }
-          }
-          return out;
-        })
-      );
+      // Combined slides are rendered natively in the PPTX (KPI tiles in 2 columns)
+      // — no snapshot capture needed.
 
       const docProps: QBRDeckDocumentProps = {
         clientName: clientName || 'Client', reportDate: formattedDate,
@@ -1425,7 +1422,9 @@ export default function QBRDeckBuilder() {
         fontOption: selectedFont, statsRows: statsRows.length > 0 ? statsRows : undefined,
         customSlides: customSlides.length > 0 ? customSlides : undefined,
         dataInstances: instancesWithSnapshots.length > 0 ? instancesWithSnapshots : undefined,
-        combinedSlides: combinedWithSnapshots.length > 0 ? combinedWithSnapshots : undefined,
+        combinedSlides: combinedSlides.filter(c => c.enabled && !c.hidden).length > 0
+          ? combinedSlides.filter(c => c.enabled && !c.hidden)
+          : undefined,
         priorPeriod: priorPeriod ?? undefined,
       };
       const blob = await generateQBRDeck(docProps, msg => setGenerateProgress(msg));
@@ -3028,7 +3027,49 @@ export default function QBRDeckBuilder() {
                     ],
                   },
                 ];
-                return LIBRARY_GROUPS.map(({ group, items }) => (
+                // Built-in structural sections that can be re-added if removed.
+                // Shows the section's enable state and a re-add button when disabled.
+                const STRUCTURAL_REENABLE: Array<{ key: DeckSectionKey; label: string; sub: string; icon: string }> = [
+                  { key: 'agenda',             label: 'Agenda',                sub: 'Auto-generated from enabled slides', icon: '☰' },
+                  { key: 'introductions',      label: 'Introductions',         sub: 'Team members on the call',           icon: '👥' },
+                  { key: 'recommendedActions', label: 'Recommended Actions',   sub: 'Auto-generated from insights',       icon: '★' },
+                ];
+                const removedStructural = STRUCTURAL_REENABLE.filter(item => {
+                  const sec = sections.find(s => s.key === item.key);
+                  return !sec?.enabled;
+                });
+
+                return (
+                  <>
+                    {removedStructural.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, paddingLeft: 2 }}>Built-in Slides</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {removedStructural.map(({ key, label, sub, icon }) => (
+                            <div
+                              key={key}
+                              onClick={() => {
+                                toggleSectionCtx(key);
+                                setSelectedKey(key);
+                              }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#FAFAFA', cursor: 'pointer' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,197,94,0.06)'; e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#FAFAFA'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                            >
+                              <div style={{ width: 28, height: 20, borderRadius: 4, background: 'rgba(34,197,94,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, color: '#15803D', fontWeight: 700 }}>{icon}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: NAVY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                                <div style={{ fontSize: 10, color: '#6B7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+                              </div>
+                              <div style={{ padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: 'rgba(34,197,94,0.10)', color: '#15803D', border: '1px solid rgba(34,197,94,0.25)', flexShrink: 0 }}>
+                                + Re-add
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {LIBRARY_GROUPS.map(({ group, items }) => (
                   <div key={group} style={{ marginBottom: 14 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, paddingLeft: 2 }}>{group}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -3063,7 +3104,9 @@ export default function QBRDeckBuilder() {
                       ))}
                     </div>
                   </div>
-                ));
+                    ))}
+                  </>
+                );
               })()}
             </div>
           </div>

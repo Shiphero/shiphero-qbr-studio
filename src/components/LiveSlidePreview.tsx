@@ -159,7 +159,7 @@ function AreaChart({ series, labels, W, H }: {
 }
 
 // ─── Per-slide content renderer ───────────────────────────────────────────────
-function SlideContent({ sectionKey, data, W, H, kpiFilter }: {
+export function SlideContent({ sectionKey, data, W, H, kpiFilter }: {
   sectionKey: DeckSectionKey;
   data: SlidePreviewData;
   W: number; H: number;
