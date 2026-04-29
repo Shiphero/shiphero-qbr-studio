@@ -2643,6 +2643,8 @@ export default function QBRDeckBuilder() {
                           clearDeck();
                           setDeckLogo(undefined);
                           setCoverPhoto(undefined);
+                          setCoverColorScheme('navy');
+                          setCoverLayout('A');
                           setTeamMembers([]);
                           setSelectedFont('B');
                           setEditedActions(null);
