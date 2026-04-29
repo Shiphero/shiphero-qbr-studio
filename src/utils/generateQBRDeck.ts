@@ -1828,32 +1828,106 @@ export async function generateQBRDeck(
 
   buildCoverSlide(pptx, props, slideNum++);
 
-  // ── Snapshot-image slide builder ─────────────────────────────────────────
-  // When a section or instance has a pre-rendered PNG snapshot, embed it as an
-  // image instead of rebuilding from raw data (fixes Google Slides blurriness).
+  // ── Category label fallbacks (used by hybrid snapshot builder) ───────────
+  const CATEGORY_DEFAULTS: Partial<Record<DeckSectionKey, string>> = {
+    accountOverview:        'SHIPPING OVERVIEW',
+    carrierMix:             'SHIPPING BREAKDOWN',
+    costGap:                'BILLING ANALYSIS',
+    serviceLevelMix:        'SHIPPING ANALYSIS',
+    labelCostByCarrier:     'COST ANALYSIS',
+    zonePerformance:        'RATE CARD',
+    expiryAlerts:           'INVENTORY',
+    daysOnHand:             'INVENTORY',
+    manualAdjustments:      'INVENTORY',
+    recommendedActions:     'NEXT STEPS',
+    volumeTrend:            'ACCOUNT HEALTH',
+    childAccountTrends:     'ACCOUNT HEALTH',
+    carrierSpendGMV:        'ACCOUNT HEALTH',
+    fulfillmentMix:         'ACCOUNT HEALTH',
+    childAccountScorecard:  'ACCOUNT HEALTH',
+    shippingKPIs:           'SHIPPING ANALYTICS',
+    zoneMap:                'NETWORK ANALYSIS',
+    warehouseInsights:      'NETWORK OPTIMIZATION',
+    shipmentsByState:       'GEOGRAPHIC DISTRIBUTION',
+    inventoryKPIs:          'INVENTORY OVERVIEW',
+    rateCardKPIs:           'RATE CARD ANALYSIS',
+    threePlKPIs:            '3PL OVERVIEW',
+    accountDetailTable:     '3PL ACCOUNT DETAIL',
+    accountHealthKPIs:      'ACCOUNT HEALTH',
+    priorQuarterKPIs:       'PRIOR QUARTER',
+    priorQuarterCarrierMix: 'PRIOR QUARTER',
+    upsAvgCost:             'RATE CARD',
+    upsZoneBreakdown:       'RATE CARD',
+  };
+  const categoryFor = (key: DeckSectionKey) =>
+    sectionLabelFor(key, CATEGORY_DEFAULTS[key] ?? key.toUpperCase());
+
+  // ── Hybrid snapshot slide builder ─────────────────────────────────────────
+  // Embeds the full-bleed snapshot PNG so charts/tables look exactly like the
+  // QBR Studio preview, then masks the header zone and overlays editable native
+  // PPTX text for section label, title, and orange underline.
+  //
+  // Coordinate derivation: LiveSlidePreview renders at width=960 (sc=96 px/in).
+  //   titleX = round(0.78 * sc) = 75 px → 0.78"
+  //   titleY = round(0.55 * sc) = 53 px → 0.55"
+  //   bodyY  = round(1.95 * sc) = 187 px → 1.95"  (content starts here)
+  //   labelFontSize = round(sc * 0.18) px = 17 px → 13 pt
+  //   titleFontSize = round(sc * 0.35) px = 34 px → 26 pt
   const buildSnapshotSlide = (
     snapshot: string,
     label: string,
+    sectionCategoryLabel: string,
     num: number,
     notes?: string,
     narrative?: string,
   ) => {
     const slide = pptx.addSlide();
-    // Full-bleed background
-    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG } });
-    addSlideMark(slide, num);
-    // Embed snapshot as image, fitted inside the content area (right of sidebar)
-    const imgArea = { x: 0.38, y: 0.18, w: W - 0.46, h: H - 0.22 };
-    const size = readImageSize(snapshot);
-    const dims = size ? fitImage(size.w, size.h, imgArea.x, imgArea.y, imgArea.w, imgArea.h) : imgArea;
-    slide.addImage({ data: snapshot, x: dims.x, y: dims.y, w: dims.w, h: dims.h });
-    // Slide number + label
-    slide.addText(label.toUpperCase(), {
-      x: 0.38, y: 0.06, w: 7, h: 0.16,
-      fontSize: _sectionLabelFontSize, bold: true, color: C.GRAY, charSpacing: 0.5,
+
+    // 1. Slide background (matches LiveSlidePreview's #EDEEF2)
+    slide.addShape('rect', { x: 0, y: 0, w: W, h: H,
+      fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG } });
+
+    // 2. Full-bleed snapshot — chart/table area matches builder exactly.
+    //    Snapshot is captured at 960×540 effective px = 10"×5.625" at 96 dpi → perfect fit.
+    slide.addImage({ data: snapshot, x: 0, y: 0, w: W, h: H });
+
+    // 3. Mask the header zone (above body content) with the slide background color.
+    //    This erases the snapshot's title text so we can replace it with editable text.
+    const SNAP_TX = 0.78;   // title area left edge  (LiveSlidePreview titleX)
+    const SNAP_BY = 1.95;   // header/content boundary (LiveSlidePreview bodyY)
+    slide.addShape('rect', {
+      x: SNAP_TX, y: 0, w: W - SNAP_TX, h: SNAP_BY,
+      fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG },
     });
-    if (notes) slide.addNotes(notes);
+
+    // 4. Native section category label — editable in Google Slides / PowerPoint
+    //    Matches LiveSlidePreview: y=titleY=0.55", font=13pt bold blue
+    const LABEL_Y = 0.55;
+    slide.addText(sectionCategoryLabel.toUpperCase(), {
+      x: SNAP_TX, y: LABEL_Y, w: W - SNAP_TX - 0.2, h: 0.20,
+      fontSize: 13, bold: true, color: C.BLUE, charSpacing: 1.5,
+    });
+
+    // 5. Native slide title — editable
+    //    Matches LiveSlidePreview: y ≈ titleY + labelH + marginTop ≈ 0.77", font=26pt bold navy
+    const TITLE_Y = LABEL_Y + 0.22;
+    slide.addText(label, {
+      x: SNAP_TX, y: TITLE_Y, w: W - SNAP_TX - 0.2, h: 0.55,
+      fontSize: 26, bold: true, color: C.DARK, lineSpacingMultiple: 1.15,
+    });
+
+    // 6. Orange underline
+    //    Matches LiveSlidePreview: y ≈ TITLE_Y + ~0.53", w=1.4", h=0.04"
+    slide.addShape('rect', {
+      x: SNAP_TX, y: TITLE_Y + 0.54, w: 1.4, h: 0.04,
+      fill: { color: C.ORANGE }, line: { color: C.ORANGE },
+    });
+
+    // 7. ShipHero logo + slide number (overlaid on the snapshot's navy sidebar)
+    addSlideMark(slide, num, true);
+
     if (narrative?.trim()) addNarrativeOverlay(slide, narrative);
+    if (notes) slide.addNotes(notes);
   };
 
   // ── Misc slide builders ────────────────────────────────────────────────────
@@ -2002,15 +2076,15 @@ export async function generateQBRDeck(
     (instanceByOrderKey[inst.orderKey] ??= []).push(inst);
   }
 
-  // Helper: emit a single DataInstanceSlide as a snapshot-image slide (or plain title if no snapshot)
+  // Helper: emit a single DataInstanceSlide as a hybrid snapshot slide (or insight slide if no snapshot)
   const buildInstance = (inst: DataInstanceSlide) => {
     const label = inst.customLabel ?? SECTION_LABELS_LOCAL[inst.parentKey];
     const useSnapshot = inst.snapshot && !isBlankSnapshot(inst.snapshot);
     if (useSnapshot) {
-      buildSnapshotSlide(inst.snapshot!, label, slideNum++, inst.notes, inst.narrative);
+      buildSnapshotSlide(inst.snapshot!, label, categoryFor(inst.parentKey), slideNum++, inst.notes, inst.narrative);
     } else {
       if (inst.snapshot) console.warn(`[QBR] Blank snapshot discarded for instance: ${label}`);
-      buildInsightSlide(pptx, 'ADDITIONAL SLIDE', label, slideNum++, inst.insight, inst.notes);
+      buildInsightSlide(pptx, categoryFor(inst.parentKey), label, slideNum++, inst.insight, inst.notes);
       if (inst.narrative?.trim() && _lastBuiltSlide) addNarrativeOverlay(_lastBuiltSlide, inst.narrative);
     }
   };
@@ -2022,14 +2096,24 @@ export async function generateQBRDeck(
     const wide = section.layout === 'wide';
     const count = 1 + (section.duplicates ?? 0);
     for (let d = 0; d < count; d++) {
-      // Always use native pptxgenjs builders so all text and charts are editable/moveable in
-      // Google Slides and PowerPoint. Snapshots are intentionally skipped for section slides.
-      buildSectionSlide(pptx, section, wide, slideNum++, props, agendaItems, titleFor, sectionLabelFor, notesFor);
-      if (section.narrative?.trim() && _lastBuiltSlide) {
-        addNarrativeOverlay(_lastBuiltSlide, section.narrative);
-      }
-      if (section.callout && _lastBuiltSlide) {
-        addCalloutPanel(_lastBuiltSlide, section.callout);
+      const useSnapshot = section.snapshot && !isBlankSnapshot(section.snapshot);
+      if (useSnapshot) {
+        // Hybrid: full-bleed snapshot (charts/tables match builder) + native editable header text
+        const label = section.customLabel ?? SECTION_LABELS_LOCAL[section.key];
+        buildSnapshotSlide(
+          section.snapshot!,
+          label,
+          categoryFor(section.key),
+          slideNum++,
+          notesFor(section.key),
+          section.narrative,
+        );
+        if (section.callout && _lastBuiltSlide) addCalloutPanel(_lastBuiltSlide, section.callout);
+      } else {
+        if (section.snapshot) console.warn(`[QBR] Blank snapshot discarded for section: ${section.key}`);
+        buildSectionSlide(pptx, section, wide, slideNum++, props, agendaItems, titleFor, sectionLabelFor, notesFor);
+        if (section.narrative?.trim() && _lastBuiltSlide) addNarrativeOverlay(_lastBuiltSlide, section.narrative);
+        if (section.callout && _lastBuiltSlide) addCalloutPanel(_lastBuiltSlide, section.callout);
       }
     }
     // Emit data instances positioned after this section
