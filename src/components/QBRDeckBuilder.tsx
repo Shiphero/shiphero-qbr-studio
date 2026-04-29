@@ -17,13 +17,16 @@ import type {
   CarrierMixRowPDF, ZoneComparisonPDF,
 } from './pdf/QBRDocument';
 import type { DeckSectionKey, QBRDeckDocumentProps, TeamMember, SectionInsight, DataInstanceSlide } from './pdf/QBRDeckDocument';
+import { COMBINABLE_SECTION_KEYS } from './pdf/QBRDeckDocument';
 import type { CustomDeckSlide } from '../context/DeckContext';
+import shipheroIsoUrl from '../assets/logos/shiphero-iso.png';
 import { TEAM_MEMBER_PRESETS } from '../data/teamMemberPresets';
 import { useDeck, SECTION_ORDER, SECTION_LABELS } from '../context/DeckContext';
-import { LiveSlidePreview, ScaledSlidePreview } from './LiveSlidePreview';
+import { LiveSlidePreview, ScaledSlidePreview, SlideContent } from './LiveSlidePreview';
 import { CALLOUT_ICONS, getIconDataUrl } from '../utils/deckIcons';
 import type { SlidePreviewData } from './LiveSlidePreview';
 import DeckPreviewModal from './DeckPreviewModal';
+import { KPI_SLIDE_STATS, isKpiSlide } from '../utils/kpiSlideStats';
 
 // ─── html2canvas snapshot capture ────────────────────────────────────────────
 async function captureElementPng(el: HTMLElement, scale = 2): Promise<string> {
@@ -93,6 +96,7 @@ interface PersistedBuilderState {
   deckLogo?: string;
   coverPhoto?: string;
   coverColorScheme?: CoverColorSchemeId;
+  coverLayout?: 'A' | 'B' | 'C';
 }
 
 function loadBuilderState(): Partial<PersistedBuilderState> {
@@ -270,9 +274,107 @@ function ChartGlyph({ type, scale = 1 }: { type: string; scale?: number }) {
   );
 }
 
+// ─── Cover slide mini-render (renders the chosen layout) ──────────────────
+function CoverThumb({
+  layout, size, coverPhotoUrl, logoUrl, bg, accent, darkText, clientName, reportingPeriod,
+}: {
+  layout: 'A' | 'B' | 'C';
+  size: 'sm' | 'lg';
+  coverPhotoUrl?: string;
+  logoUrl?: string;
+  bg: string;
+  accent: string;
+  darkText: boolean;
+  clientName?: string;
+  reportingPeriod?: string;
+}) {
+  const lg   = size === 'lg';
+  const text = darkText ? NAVY : '#fff';
+  const sub  = darkText ? 'rgba(37,47,62,0.55)' : 'rgba(255,255,255,0.55)';
+  const name = (clientName || 'Client').trim();
+
+  if (layout === 'B') {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
+        {/* Left panel */}
+        <div style={{ width: '42%', position: 'relative', background: bg, overflow: 'hidden' }}>
+          {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: lg ? 16 : 6 }}>
+            <img src={shipheroIsoUrl} alt="" style={{ height: lg ? 96 : 32, objectFit: 'contain' }} />
+            <div style={{ fontSize: lg ? 9 : 3.5, color: text, fontWeight: 700, letterSpacing: 2, textAlign: 'center', marginTop: lg ? 8 : 3, lineHeight: 1.3 }}>QUARTERLY<br/>BUSINESS<br/>REVIEW</div>
+          </div>
+          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: lg ? 4 : 1.5, background: accent }} />
+        </div>
+        {/* Right panel */}
+        <div style={{ flex: 1, background: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: lg ? '0 28px' : '0 8px' }}>
+          <div style={{ fontSize: lg ? 8 : 3, fontWeight: 700, color: BLUE, letterSpacing: 2, marginBottom: lg ? 6 : 2 }}>PREPARED FOR</div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" style={{ height: lg ? 56 : 20, maxWidth: lg ? 200 : 70, objectFit: 'contain', objectPosition: 'left center', marginBottom: lg ? 10 : 3 }} />
+          ) : (
+            <div style={{ fontSize: lg ? 13 : 5, fontWeight: 800, color: NAVY, marginBottom: lg ? 10 : 3, letterSpacing: 1 }}>{name.toUpperCase()}</div>
+          )}
+          <div style={{ fontSize: lg ? 26 : 9, fontWeight: 800, color: NAVY, lineHeight: 1.1 }}>{name}</div>
+          <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 10 : 3 }} />
+          {reportingPeriod && <div style={{ fontSize: lg ? 13 : 5, color: accent, fontWeight: 700, marginTop: lg ? 8 : 2 }}>{reportingPeriod}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'C') {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {/* Banner top */}
+        <div style={{ height: '38%', background: bg, position: 'relative', display: 'flex', alignItems: 'center', padding: lg ? '0 24px' : '0 8px', gap: lg ? 12 : 4, overflow: 'hidden' }}>
+          {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />}
+          <img src={shipheroIsoUrl} alt="" style={{ height: lg ? 60 : 22, objectFit: 'contain', position: 'relative', zIndex: 1 }} />
+          <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+            <div style={{ fontSize: lg ? 9 : 3.5, color: text, fontWeight: 700, letterSpacing: 3 }}>QUARTERLY BUSINESS REVIEW</div>
+            {reportingPeriod && <div style={{ fontSize: lg ? 18 : 7, color: text, fontWeight: 800, marginTop: lg ? 4 : 1 }}>{reportingPeriod}</div>}
+          </div>
+        </div>
+        {/* Accent stripe */}
+        <div style={{ height: lg ? 4 : 1.5, background: accent }} />
+        {/* Lower */}
+        <div style={{ flex: 1, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: lg ? 16 : 6 }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="" style={{ height: lg ? 70 : 24, maxWidth: lg ? 280 : 100, objectFit: 'contain', marginBottom: lg ? 14 : 4 }} />
+          ) : (
+            <div style={{ fontSize: lg ? 18 : 7, color: NAVY, fontWeight: 800, letterSpacing: 1, marginBottom: lg ? 14 : 4 }}>{name.toUpperCase()}</div>
+          )}
+          <div style={{ fontSize: lg ? 28 : 10, fontWeight: 800, color: NAVY, textAlign: 'center', lineHeight: 1.1 }}>{name}</div>
+          <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 8 : 3 }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Layout A — Centered Hero (default)
+  return (
+    <>
+      {coverPhotoUrl && <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: lg ? 4 : 1.5, background: accent, zIndex: 1 }} />
+      {/* ShipHero iso top-right */}
+      <img src={shipheroIsoUrl} alt="" style={{ position: 'absolute', top: lg ? 16 : 6, right: lg ? 18 : 6, height: lg ? 26 : 10, objectFit: 'contain', zIndex: 2 }} />
+      <div style={{ padding: lg ? '40px 32px 24px' : '14px 12px 8px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt="" style={{ height: lg ? 80 : 28, maxWidth: lg ? 280 : 100, objectFit: 'contain', marginBottom: lg ? 14 : 4 }} />
+        ) : (
+          <div style={{ fontSize: lg ? 22 : 8, color: text, fontWeight: 800, letterSpacing: 1, marginBottom: lg ? 14 : 4 }}>{name.toUpperCase()}</div>
+        )}
+        <div style={{ fontSize: lg ? 30 : 11, fontWeight: 800, color: text, textAlign: 'center', lineHeight: 1.1 }}>{name}</div>
+        <div style={{ width: lg ? 60 : 22, height: lg ? 3 : 1.2, background: accent, borderRadius: 1, marginTop: lg ? 10 : 3 }} />
+        <div style={{ fontSize: lg ? 9 : 3.5, color: sub, fontWeight: 700, letterSpacing: 2, marginTop: lg ? 8 : 2 }}>QUARTERLY BUSINESS REVIEW</div>
+        {reportingPeriod && <div style={{ fontSize: lg ? 13 : 5, color: accent, fontWeight: 700, marginTop: lg ? 4 : 1 }}>{reportingPeriod}</div>}
+      </div>
+    </>
+  );
+}
+
 // ─── Slide thumbnail (16:9 mini canvas) ───────────────────────────────────
 function SlideThumbnail({
   sectionKey, size = 'sm', customType, customVariant, coverPhotoUrl, logoUrl, coverBg, coverAccent,
+  coverLayout, clientName, reportingPeriod,
 }: {
   sectionKey: string;
   size?: 'sm' | 'lg';
@@ -282,6 +384,9 @@ function SlideThumbnail({
   logoUrl?: string;
   coverBg?: string;
   coverAccent?: string;
+  coverLayout?: 'A' | 'B' | 'C';
+  clientName?: string;
+  reportingPeriod?: string;
 }) {
   const w = size === 'lg' ? 480 : 160;
   const h = Math.round(w / (16 / 9));
@@ -393,24 +498,17 @@ function SlideThumbnail({
       display: 'flex', flexDirection: 'column',
     }}>
       {isCover ? (
-        /* Cover slide mini-render */
-        <>
-          {coverPhotoUrl && (
-            <img src={coverPhotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} />
-          )}
-          {/* Top accent bar */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: size === 'lg' ? 4 : 1.5, background: coverAccColor, zIndex: 1 }} />
-          <div style={{ padding: size === 'lg' ? '28px 32px' : '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
-            <div style={{ fontSize: size === 'lg' ? 11 : 5, color: coverDarkText ? 'rgba(37,47,62,0.5)' : 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: size === 'lg' ? 6 : 2 }}>Quarterly Business Review</div>
-            {logoUrl ? (
-              <img src={logoUrl} alt="" style={{ height: size === 'lg' ? 28 : 10, maxWidth: size === 'lg' ? 120 : 44, objectFit: 'contain', marginBottom: size === 'lg' ? 8 : 3 }} />
-            ) : (
-              <div style={{ fontSize: size === 'lg' ? 22 : 8, color: coverDarkText ? NAVY : '#fff', fontWeight: 800, letterSpacing: 1, marginBottom: size === 'lg' ? 8 : 3 }}>CLIENT NAME</div>
-            )}
-            <div style={{ width: size === 'lg' ? 48 : 16, height: size === 'lg' ? 3 : 1.5, background: coverAccColor, borderRadius: 1 }} />
-            <div style={{ fontSize: size === 'lg' ? 10 : 4, color: coverDarkText ? 'rgba(37,47,62,0.35)' : 'rgba(255,255,255,0.35)', marginTop: size === 'lg' ? 10 : 4 }}>Prepared by ShipHero</div>
-          </div>
-        </>
+        <CoverThumb
+          layout={coverLayout ?? 'A'}
+          size={size}
+          coverPhotoUrl={coverPhotoUrl}
+          logoUrl={logoUrl}
+          bg={coverBgColor}
+          accent={coverAccColor}
+          darkText={coverDarkText}
+          clientName={clientName}
+          reportingPeriod={reportingPeriod}
+        />
       ) : (
         <>
           {/* Title bar */}
@@ -544,7 +642,7 @@ function InlineInsightEditor({ sectionKey, insight, onSave }: {
 // ─── SlideListItem type ────────────────────────────────────────────────────
 interface SlideListItem {
   id: string;
-  type: 'cover' | 'data' | 'custom' | 'instance';
+  type: 'cover' | 'data' | 'custom' | 'instance' | 'combined';
   variant?: CustomDeckSlide['variant'];
   label: string;
   isFixed: boolean;
@@ -554,6 +652,9 @@ interface SlideListItem {
   instanceId?: string;
   /** For type==='instance': the parent section key */
   parentKey?: DeckSectionKey;
+  /** For type==='combined': source section keys for left/right columns */
+  leftKey?: DeckSectionKey;
+  rightKey?: DeckSectionKey;
 }
 
 // ─── Row filter slide keys ─────────────────────────────────────────────────
@@ -634,6 +735,73 @@ function SlideEditText({ field, value, placeholder, onSave, isEditing, onStart, 
       title="Click to edit"
     >
       {value ? value : <span style={{ opacity: 0.3, fontStyle: 'italic' }}>{placeholder}</span>}
+    </div>
+  );
+}
+
+// ─── Combined slide preview (2 column KPI pair, native rendering) ────────
+/**
+ * Mirrors generateQBRDeck.buildCombinedSlide: a single shared title at top,
+ * orange underline, then two columns of native KPI tiles (via SlideContent).
+ * No "slide-inside-a-slide" — looks visually consistent with single-section
+ * KPI slides in the deck.
+ */
+function CombinedSlidePreview({
+  slide, previewData, width = 480,
+}: {
+  slide: import('../context/DeckContext').CombinedSlide;
+  previewData: SlidePreviewData;
+  width?: number;
+}) {
+  const H  = Math.round(width * 9 / 16);
+  const sc = width / 10;
+  const sbW = Math.round(0.3 * sc);
+  // Title coordinates match LiveSlidePreview header layout
+  const titleX = Math.round(0.78 * sc);
+  const titleY = Math.round(0.55 * sc);
+  const colTopY = Math.round(1.65 * sc);
+  const colGap = Math.round(0.20 * sc);
+  const colInnerLeft  = Math.round(0.48 * sc);
+  const colInnerRight = width - Math.round(0.30 * sc);
+  const totalW = colInnerRight - colInnerLeft;
+  const colW   = Math.round((totalW - colGap) / 2);
+
+  return (
+    <div style={{ width, height: H, background: '#EDEEF2', borderRadius: 6, position: 'relative', flexShrink: 0, overflow: 'hidden', border: '1px solid #E5E7EB', fontFamily: FONT }}>
+      {/* Sidebar mark */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: sbW, background: NAVY }} />
+      <div style={{ position: 'absolute', top: 6, left: 6, width: 8, height: 8, background: '#EF5252', transform: 'rotate(45deg)' }} />
+
+      {/* Shared title */}
+      <div style={{ position: 'absolute', left: titleX, top: titleY, right: 12 }}>
+        <div style={{ fontSize: Math.round(sc * 0.13), fontWeight: 700, color: '#4472E8', letterSpacing: 1.5 }}>{(slide.sectionLabel || 'COMBINED').toUpperCase()}</div>
+        <div style={{ fontSize: Math.round(sc * 0.32), fontWeight: 800, color: '#1C1C2E', marginTop: 2, lineHeight: 1.1 }}>{slide.title || 'Combined Slide'}</div>
+        <div style={{ width: Math.round(sc * 1.4), height: Math.round(sc * 0.04), background: '#EF5252', marginTop: 4 }} />
+      </div>
+
+      {/* Two columns */}
+      <div style={{ position: 'absolute', left: colInnerLeft, top: colTopY, right: width - colInnerRight, bottom: 16, display: 'flex', gap: colGap }}>
+        {[slide.leftKey, slide.rightKey].map((key, i) => (
+          <div key={i} style={{ width: colW, display: 'flex', flexDirection: 'column' }}>
+            {/* Column subtitle */}
+            {key ? (
+              <>
+                <div style={{ fontSize: Math.round(sc * 0.10), fontWeight: 700, color: '#4472E8', letterSpacing: 1.2 }}>
+                  {SECTION_LABELS[key].toUpperCase()}
+                </div>
+                <div style={{ width: Math.round(sc * 0.5), height: 2, background: '#EF5252', marginTop: 3 }} />
+                <div style={{ marginTop: 8, flex: 1, overflow: 'hidden' }}>
+                  <SlideContent sectionKey={key} data={previewData} W={colW} H={H - colTopY - 28} />
+                </div>
+              </>
+            ) : (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF', textAlign: 'center', border: '1px dashed #D1D5DB', borderRadius: 6 }}>
+                Pick a section for {i === 0 ? 'left' : 'right'} column
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -821,7 +989,8 @@ export default function QBRDeckBuilder() {
     toggleSection: toggleSectionCtx, setCustomLabel, setSectionLabel,
     setNotes, setInsight, setHidden, setDuplicates,
     customSlides, addCustomSlide, updateCustomSlide, removeCustomSlide,
-    setLayout, setRowFilter, setContentOffset, setNarrative, setCallout,
+    combinedSlides, addCombinedSlide, updateCombinedSlide, removeCombinedSlide,
+    setLayout, setRowFilter, setKpiFilter, setContentOffset, setNarrative, setCallout,
     clearDeck, applyTemplate, reorderDeck,
     dataInstances, addDataInstance, updateDataInstance, removeDataInstance,
     execSummary, setExecSummary,
@@ -875,6 +1044,7 @@ export default function QBRDeckBuilder() {
   const [deckLogo, setDeckLogo]             = useState<string | undefined>(() => loadBuilderState().deckLogo);
   const [coverPhoto, setCoverPhoto]         = useState<string | undefined>(() => loadBuilderState().coverPhoto);
   const [coverColorScheme, setCoverColorScheme] = useState<CoverColorSchemeId>(() => loadBuilderState().coverColorScheme ?? 'navy');
+  const [coverLayout, setCoverLayout] = useState<'A' | 'B' | 'C'>(() => loadBuilderState().coverLayout ?? 'A');
   const [generateProgress, setGenerateProgress] = useState<string | null>(null);
   const [showPreflight, setShowPreflight]   = useState(false);
   const [showPreview, setShowPreview]       = useState(false);
@@ -893,8 +1063,8 @@ export default function QBRDeckBuilder() {
 
   // ── Persist builder state ───────────────────────────────────────────────
   useEffect(() => {
-    saveBuilderState({ teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme });
-  }, [teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme]);
+    saveBuilderState({ teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme, coverLayout });
+  }, [teamMembers, reportDate, reportingPeriod, clientName, selectedFont, deckLogo, coverPhoto, coverColorScheme, coverLayout]);
 
   // ── Drag state ──────────────────────────────────────────────────────────
   const [dragIndex, setDragIndex]   = useState<number | null>(null);
@@ -918,6 +1088,11 @@ export default function QBRDeckBuilder() {
     for (const inst of dataInstances) {
       (instancesByKey[inst.orderKey] ??= []).push(inst);
     }
+    // Group combined slides by their orderKey (after:<leftKey>)
+    const combinedByKey: Record<string, typeof combinedSlides> = {};
+    for (const cb of combinedSlides.filter(c => c.enabled)) {
+      (combinedByKey[cb.orderKey] ??= []).push(cb);
+    }
 
     const result: SlideListItem[] = [
       { id: 'cover', type: 'cover', label: 'Cover Slide', isFixed: true, isHidden: false, duplicates: 0 },
@@ -928,8 +1103,26 @@ export default function QBRDeckBuilder() {
       result.push({ id: cs.id, type: 'custom', variant: cs.variant, label: cs.title || 'Untitled', isFixed: false, isHidden: !!cs.hidden, duplicates: cs.duplicates ?? 0 });
     }
 
+    // Hide source sections that are absorbed into a combined slide
+    const absorbedKeys = new Set<DeckSectionKey>();
+    for (const cb of combinedSlides.filter(c => c.enabled)) {
+      if (cb.leftKey)  absorbedKeys.add(cb.leftKey);
+      if (cb.rightKey) absorbedKeys.add(cb.rightKey);
+    }
+
     for (const s of enabledSections) {
-      result.push({ id: s.key, type: 'data', label: s.customLabel || SECTION_LABELS[s.key], isFixed: false, isHidden: !!s.hidden, duplicates: s.duplicates ?? 0 });
+      if (!absorbedKeys.has(s.key)) {
+        result.push({ id: s.key, type: 'data', label: s.customLabel || SECTION_LABELS[s.key], isFixed: false, isHidden: !!s.hidden, duplicates: s.duplicates ?? 0 });
+      }
+      // Append any combined slides anchored after this section
+      for (const cb of combinedByKey[`after:${s.key}`] ?? []) {
+        result.push({
+          id: cb.id, type: 'combined',
+          label: cb.title || 'Combined',
+          isFixed: false, isHidden: !!cb.hidden, duplicates: 0,
+          leftKey: cb.leftKey, rightKey: cb.rightKey,
+        });
+      }
       // Append any data instances ordered after this section
       for (const inst of instancesByKey[`after:${s.key}`] ?? []) {
         result.push({
@@ -949,7 +1142,7 @@ export default function QBRDeckBuilder() {
     }
 
     return result;
-  }, [enabledSections, customSlides, dataInstances]);
+  }, [enabledSections, customSlides, dataInstances, combinedSlides]);
 
   // ── Unified slide reorder ───────────────────────────────────────────────
   const handleSlideReorder = useCallback((fromListIdx: number, toListIdx: number) => {
@@ -1214,17 +1407,25 @@ export default function QBRDeckBuilder() {
         })
       );
 
+      // Combined slides are rendered natively in the PPTX (KPI tiles in 2 columns)
+      // — no snapshot capture needed.
+
       const docProps: QBRDeckDocumentProps = {
         clientName: clientName || 'Client', reportDate: formattedDate,
         reportingPeriod: reportingPeriod || undefined,
         clientLogo: deckLogo || clientLogo || undefined,
         coverPhoto: coverPhoto || undefined,
         coverColorScheme: coverColorScheme !== 'navy' ? coverColorScheme : undefined,
+        coverLayout,
         enabledSections: sectionsWithSnapshots, teamMembers, kpis, customerStats, costGapRows, carrierMix,
         zoneComparisons, inventoryData, recommendedActions: displayActions.length > 0 ? displayActions : undefined,
         fontOption: selectedFont, statsRows: statsRows.length > 0 ? statsRows : undefined,
         customSlides: customSlides.length > 0 ? customSlides : undefined,
         dataInstances: instancesWithSnapshots.length > 0 ? instancesWithSnapshots : undefined,
+        combinedSlides: combinedSlides.filter(c => c.enabled && !c.hidden).length > 0
+          ? combinedSlides.filter(c => c.enabled && !c.hidden)
+          : undefined,
+        priorPeriod: priorPeriod ?? undefined,
       };
       const blob = await generateQBRDeck(docProps, msg => setGenerateProgress(msg));
       const url = URL.createObjectURL(blob);
@@ -1238,7 +1439,7 @@ export default function QBRDeckBuilder() {
       console.error('Deck generation failed:', err);
       alert('Failed to generate deck. Please try again.');
     } finally { setGenerateProgress(null); }
-  }, [clientName, reportDate, reportingPeriod, sections, teamMembers, kpis, customerStats, costGapRows, carrierMix, zoneComparisons, inventoryData, displayActions, log, clientLogo, deckLogo, coverPhoto, selectedFont, statsRows, customSlides, previewData, dataInstances, recordDeckExport]);
+  }, [clientName, reportDate, reportingPeriod, sections, teamMembers, kpis, customerStats, costGapRows, carrierMix, zoneComparisons, inventoryData, displayActions, log, clientLogo, deckLogo, coverPhoto, selectedFont, statsRows, customSlides, previewData, dataInstances, combinedSlides, recordDeckExport]);
 
   // ── Outer generate handler — shows pre-flight modal if needed ────────────
   const handleGenerate = useCallback(() => {
@@ -1258,6 +1459,7 @@ export default function QBRDeckBuilder() {
   const selectedSection    = selectedSlideItem?.type === 'data' ? sections.find(s => s.key === selectedKey) : null;
   const selectedInstance   = selectedSlideItem?.type === 'instance' ? dataInstances.find(inst => inst.id === selectedKey) : null;
   const selectedCustom     = selectedSlideItem?.type === 'custom' ? customSlides.find(c => c.id === selectedKey) : null;
+  const selectedCombined   = selectedSlideItem?.type === 'combined' ? combinedSlides.find(c => c.id === selectedKey) : null;
   /** Effective section key — for instances, use parentKey for data/meta lookups */
   const effectiveSectionKey = (selectedInstance?.parentKey ?? selectedKey) as DeckSectionKey;
   const selectedLabel     = selectedSlideItem?.type === 'cover' ? 'Cover Slide'
@@ -1483,6 +1685,12 @@ export default function QBRDeckBuilder() {
                             : previewData}
                           displayWidth={160}
                         />
+                      ) : slide.type === 'combined' ? (
+                        <CombinedSlidePreview
+                          slide={combinedSlides.find(c => c.id === slide.id)!}
+                          previewData={previewData}
+                          width={160}
+                        />
                       ) : (
                         <SlideThumbnail
                           sectionKey={slide.id}
@@ -1493,6 +1701,8 @@ export default function QBRDeckBuilder() {
                           logoUrl={slide.id === 'cover' ? (deckLogo || clientLogo || undefined) : undefined}
                           coverBg={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.bg}
                           coverAccent={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.accent}
+                          coverLayout={slide.id === 'cover' ? coverLayout : undefined}
+                          clientName={slide.id === 'cover' ? clientName : undefined}
                         />
                       )}
                       {/* Hidden overlay */}
@@ -1518,7 +1728,7 @@ export default function QBRDeckBuilder() {
                       {/* Slide number + completion dot */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
                         <span style={{ fontSize: 9, fontWeight: 700, color: '#475569', background: 'rgba(255,255,255,0.06)', borderRadius: 4, padding: '1px 4px' }}>{listIdx + 1}</span>
-                        <CompletionDot sectionKey={slide.id} sections={sections} itemType={slide.type === 'instance' ? 'data' : slide.type} />
+                        <CompletionDot sectionKey={slide.id} sections={sections} itemType={slide.type === 'instance' || slide.type === 'combined' ? 'data' : slide.type} />
                         {slide.isHidden && (
                           <span style={{ fontSize: 8, fontWeight: 600, color: '#475569', background: 'rgba(71,85,105,0.2)', borderRadius: 3, padding: '1px 4px' }}>HIDDEN</span>
                         )}
@@ -1612,6 +1822,7 @@ export default function QBRDeckBuilder() {
                     contentOffset={selectedSection?.contentOffset}
                     onOffsetChange={(offset) => setContentOffset(selectedKey as DeckSectionKey, offset)}
                     callout={selectedSection?.callout}
+                    kpiFilter={selectedSection?.kpiFilter}
                     width={480}
                   />
                 ) : selectedSlideItem?.type === 'instance' && selectedInstance ? (
@@ -1630,6 +1841,12 @@ export default function QBRDeckBuilder() {
                     slide={selectedCustom}
                     onUpdate={patch => updateCustomSlide(selectedCustom.id, patch)}
                   />
+                ) : selectedSlideItem?.type === 'combined' && selectedCombined ? (
+                  <CombinedSlidePreview
+                    slide={selectedCombined}
+                    previewData={previewData}
+                    width={480}
+                  />
                 ) : (
                   <SlideThumbnail
                     sectionKey={selectedKey}
@@ -1640,6 +1857,9 @@ export default function QBRDeckBuilder() {
                     logoUrl={selectedKey === 'cover' ? (deckLogo || clientLogo || undefined) : undefined}
                     coverBg={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.bg}
                     coverAccent={COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme)?.accent}
+                    coverLayout={selectedKey === 'cover' ? coverLayout : undefined}
+                    clientName={selectedKey === 'cover' ? clientName : undefined}
+                    reportingPeriod={selectedKey === 'cover' ? reportingPeriod : undefined}
                   />
                 )}
 
@@ -1768,6 +1988,44 @@ export default function QBRDeckBuilder() {
                             >×</button>
                           </div>
                         )}
+                        {/* Combine with… (KPI summary sections only) */}
+                        {selectedSlideItem?.type === 'data' && COMBINABLE_SECTION_KEYS.includes(selectedKey as DeckSectionKey) && (() => {
+                          const selfKey = selectedKey as DeckSectionKey;
+                          const partners = COMBINABLE_SECTION_KEYS.filter(k =>
+                            k !== selfKey
+                            && availability[k].available
+                            // Don't offer keys already absorbed into a combined slide
+                            && !combinedSlides.some(c => c.enabled && (c.leftKey === k || c.rightKey === k))
+                            && !combinedSlides.some(c => c.enabled && (c.leftKey === selfKey || c.rightKey === selfKey))
+                          );
+                          if (partners.length === 0) return null;
+                          return (
+                            <details style={{ position: 'relative' }}>
+                              <summary style={{ listStyle: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(68,114,232,0.3)', background: 'rgba(68,114,232,0.08)', color: BLUE, fontWeight: 600, fontSize: 11, fontFamily: FONT }}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/>
+                                </svg>
+                                Combine with…
+                              </summary>
+                              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 10, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, padding: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', minWidth: 200 }}>
+                                {partners.map(k => (
+                                  <button
+                                    key={k}
+                                    onClick={() => {
+                                      const newSlide = addCombinedSlide(selfKey, k);
+                                      setSelectedKey(newSlide.id);
+                                    }}
+                                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: NAVY, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F0')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                  >
+                                    {SECTION_LABELS[k]}
+                                  </button>
+                                ))}
+                              </div>
+                            </details>
+                          );
+                        })()}
                       </>
                     )}
                   </div>
@@ -1908,6 +2166,145 @@ export default function QBRDeckBuilder() {
                   </div>
                 </div>
               )}
+
+              {/* ── Combined slide editor ── */}
+              {selectedSlideItem?.type === 'combined' && selectedCombined && (() => {
+                const combinable = COMBINABLE_SECTION_KEYS.filter(k => availability[k].available);
+                const update = (patch: Partial<typeof selectedCombined>) => updateCombinedSlide(selectedCombined.id, patch);
+                const cb = selectedCombined;
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Combined Slide</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                      <CfField label="Slide Title">
+                        <input value={cb.title}
+                          onChange={e => update({ title: e.target.value })}
+                          placeholder="e.g. Account & Inventory Summary"
+                          style={CF_INPUT} />
+                      </CfField>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'end' }}>
+                        <CfField label="Left Column">
+                          <select value={cb.leftKey ?? ''}
+                            onChange={e => update({ leftKey: (e.target.value || undefined) as DeckSectionKey | undefined })}
+                            style={CF_INPUT}>
+                            <option value="">— pick a section —</option>
+                            {combinable.map(k => (
+                              <option key={k} value={k} disabled={k === cb.rightKey}>{SECTION_LABELS[k]}</option>
+                            ))}
+                          </select>
+                        </CfField>
+                        <button
+                          onClick={() => update({ leftKey: cb.rightKey, rightKey: cb.leftKey })}
+                          title="Swap left and right"
+                          style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #E5E7EB', background: '#fff', color: NAVY, cursor: 'pointer', fontFamily: FONT, fontSize: 14, height: 36 }}
+                        >⇄</button>
+                        <CfField label="Right Column">
+                          <select value={cb.rightKey ?? ''}
+                            onChange={e => update({ rightKey: (e.target.value || undefined) as DeckSectionKey | undefined })}
+                            style={CF_INPUT}>
+                            <option value="">— pick a section —</option>
+                            {combinable.map(k => (
+                              <option key={k} value={k} disabled={k === cb.leftKey}>{SECTION_LABELS[k]}</option>
+                            ))}
+                          </select>
+                        </CfField>
+                      </div>
+
+                      <CfField label="Section Label (optional)">
+                        <input value={cb.sectionLabel ?? ''}
+                          onChange={e => update({ sectionLabel: e.target.value || undefined })}
+                          placeholder="e.g. EXECUTIVE SUMMARY"
+                          style={CF_INPUT} />
+                      </CfField>
+
+                      <CfField label="Narrative (optional)">
+                        <textarea value={cb.narrative ?? ''}
+                          onChange={e => update({ narrative: e.target.value || undefined })}
+                          placeholder="Bullet points appear at the bottom of the slide…"
+                          rows={3}
+                          style={CF_TA} />
+                      </CfField>
+
+                      <CfField label="Speaker Notes (optional)">
+                        <textarea value={cb.notes ?? ''}
+                          onChange={e => update({ notes: e.target.value || undefined })}
+                          rows={2}
+                          style={CF_TA} />
+                      </CfField>
+
+                      <button
+                        onClick={() => {
+                          if (!confirm('Remove this combined slide? Both source sections will return to rendering as separate slides.')) return;
+                          removeCombinedSlide(cb.id);
+                          setSelectedKey('cover');
+                        }}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FEF2F2', color: '#EF4444', fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: FONT, alignSelf: 'flex-start' }}
+                      >
+                        Remove Combined Slide
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── KPI stat tile selector ── */}
+              {!isStructural && selectedSlideItem?.type === 'data' && (() => {
+                const sKey = selectedKey as DeckSectionKey;
+                if (!isKpiSlide(sKey)) return null;
+                const statDefs = KPI_SLIDE_STATS[sKey] ?? [];
+                const currentFilter = selectedSection?.kpiFilter ?? [];
+                // A stat is "on" when filter is empty (all shown) or the id is in the filter
+                const isOn = (id: string) => currentFilter.length === 0 || currentFilter.includes(id);
+                const allOn = currentFilter.length === 0;
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Stats to Show
+                      </div>
+                      <button
+                        onClick={() => setKpiFilter(sKey, undefined)}
+                        style={{ fontSize: 10, color: allOn ? BLUE : '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: FONT }}
+                      >
+                        {allOn ? '✓ All selected' : 'Select all'}
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      {statDefs.map(stat => {
+                        const on = isOn(stat.id);
+                        return (
+                          <label key={stat.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '5px 8px', borderRadius: 6, background: on ? 'rgba(68,114,232,0.06)' : '#F9FAFB', border: `1px solid ${on ? 'rgba(68,114,232,0.2)' : '#E5E7EB'}` }}>
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={e => {
+                                // Build new filter set
+                                const currentIds = allOn ? statDefs.map(s => s.id) : [...currentFilter];
+                                const next = e.target.checked
+                                  ? [...new Set([...currentIds, stat.id])]
+                                  : currentIds.filter(id => id !== stat.id);
+                                // If all are checked, clear the filter (= show all)
+                                const allChecked = statDefs.every(s => next.includes(s.id));
+                                setKpiFilter(sKey, allChecked ? undefined : next.length ? next : undefined);
+                              }}
+                              style={{ accentColor: BLUE, width: 13, height: 13, flexShrink: 0 }}
+                            />
+                            <span style={{ fontSize: 12, color: on ? NAVY : '#9CA3AF', fontWeight: on ? 600 : 400 }}>{stat.label}</span>
+                            {stat.conditional && <span style={{ fontSize: 9, color: '#9CA3AF', marginLeft: 'auto' }}>conditional</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {!allOn && (
+                      <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 6 }}>
+                        {currentFilter.length} of {statDefs.length} stats selected
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ── Narrative editor (data slides + instances) ── */}
               {!isStructural && (selectedSlideItem?.type === 'data' || selectedSlideItem?.type === 'instance') && (() => {
@@ -2383,6 +2780,46 @@ export default function QBRDeckBuilder() {
                       </div>
                     </SettingRow>
 
+                    {/* Cover layout */}
+                    <SettingRow label="Cover Layout" sub="Title page layout — works with any color scheme">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                        {(['A', 'B', 'C'] as const).map(opt => {
+                          const isActive = coverLayout === opt;
+                          const label = opt === 'A' ? 'Centered' : opt === 'B' ? 'Split' : 'Banner';
+                          const scheme = COVER_COLOR_SCHEMES.find(s => s.id === coverColorScheme) ?? COVER_COLOR_SCHEMES[0];
+                          return (
+                            <button
+                              key={opt}
+                              onClick={() => setCoverLayout(opt)}
+                              style={{
+                                position: 'relative',
+                                padding: 0, height: 78, borderRadius: 8, cursor: 'pointer',
+                                border: isActive ? `2.5px solid ${ORANGE}` : '1.5px solid #E5E7EB',
+                                background: '#fff', overflow: 'hidden',
+                                boxShadow: isActive ? `0 0 0 1px ${ORANGE}` : '0 1px 3px rgba(0,0,0,0.08)',
+                                transition: 'border-color 0.12s, box-shadow 0.12s',
+                              }}
+                            >
+                              <div style={{ position: 'absolute', inset: 4, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+                                <CoverThumb
+                                  layout={opt}
+                                  size="sm"
+                                  bg={scheme.bg}
+                                  accent={scheme.accent}
+                                  darkText={scheme.darkText}
+                                  logoUrl={deckLogo || clientLogo || undefined}
+                                  coverPhotoUrl={coverPhoto}
+                                  clientName={clientName}
+                                  reportingPeriod={reportingPeriod}
+                                />
+                              </div>
+                              <div style={{ position: 'absolute', bottom: 2, left: 0, right: 0, fontSize: 9, fontWeight: 700, color: isActive ? ORANGE : '#6B7280', textAlign: 'center' }}>{label}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </SettingRow>
+
                     {/* Cover photo */}
                     <SettingRow label="Cover Background Photo" sub="Optional image layered over the color">
                       <ImageUploadBox value={coverPhoto} onUpload={setCoverPhoto} onClear={() => setCoverPhoto(undefined)} placeholder="+ Upload background photo" />
@@ -2440,6 +2877,8 @@ export default function QBRDeckBuilder() {
                           clearDeck();
                           setDeckLogo(undefined);
                           setCoverPhoto(undefined);
+                          setCoverColorScheme('navy');
+                          setCoverLayout('A');
                           setTeamMembers([]);
                           setSelectedFont('B');
                           setEditedActions(null);
@@ -2588,7 +3027,49 @@ export default function QBRDeckBuilder() {
                     ],
                   },
                 ];
-                return LIBRARY_GROUPS.map(({ group, items }) => (
+                // Built-in structural sections that can be re-added if removed.
+                // Shows the section's enable state and a re-add button when disabled.
+                const STRUCTURAL_REENABLE: Array<{ key: DeckSectionKey; label: string; sub: string; icon: string }> = [
+                  { key: 'agenda',             label: 'Agenda',                sub: 'Auto-generated from enabled slides', icon: '☰' },
+                  { key: 'introductions',      label: 'Introductions',         sub: 'Team members on the call',           icon: '👥' },
+                  { key: 'recommendedActions', label: 'Recommended Actions',   sub: 'Auto-generated from insights',       icon: '★' },
+                ];
+                const removedStructural = STRUCTURAL_REENABLE.filter(item => {
+                  const sec = sections.find(s => s.key === item.key);
+                  return !sec?.enabled;
+                });
+
+                return (
+                  <>
+                    {removedStructural.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, paddingLeft: 2 }}>Built-in Slides</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {removedStructural.map(({ key, label, sub, icon }) => (
+                            <div
+                              key={key}
+                              onClick={() => {
+                                toggleSectionCtx(key);
+                                setSelectedKey(key);
+                              }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#FAFAFA', cursor: 'pointer' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,197,94,0.06)'; e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#FAFAFA'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                            >
+                              <div style={{ width: 28, height: 20, borderRadius: 4, background: 'rgba(34,197,94,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, color: '#15803D', fontWeight: 700 }}>{icon}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: NAVY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                                <div style={{ fontSize: 10, color: '#6B7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+                              </div>
+                              <div style={{ padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: 'rgba(34,197,94,0.10)', color: '#15803D', border: '1px solid rgba(34,197,94,0.25)', flexShrink: 0 }}>
+                                + Re-add
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {LIBRARY_GROUPS.map(({ group, items }) => (
                   <div key={group} style={{ marginBottom: 14 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, paddingLeft: 2 }}>{group}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -2623,7 +3104,9 @@ export default function QBRDeckBuilder() {
                       ))}
                     </div>
                   </div>
-                ));
+                    ))}
+                  </>
+                );
               })()}
             </div>
           </div>

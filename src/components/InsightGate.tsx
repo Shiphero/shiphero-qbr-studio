@@ -2,6 +2,7 @@ import { useState, memo } from 'react';
 import { useDeck, SECTION_LABELS } from '../context/DeckContext';
 import type { DeckSectionKey, SectionInsight } from './pdf/QBRDeckDocument';
 import { useData } from '../context/DataContext';
+import { KPI_SLIDE_STATS } from '../utils/kpiSlideStats';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const RECOMMENDED_ACTIONS = [
@@ -326,3 +327,97 @@ const InsightGate = memo(({ sectionKey }: { sectionKey: DeckSectionKey }) => {
 });
 
 export default InsightGate;
+
+// ─── Per-stat tile add-to-deck button ─────────────────────────────────────────
+/**
+ * Small + / ✓ button that lives in the top-right corner of a KPI stat tile.
+ * - "+" → enables the section and adds only this stat to the kpiFilter (additive).
+ * - "✓" (hover → ×) → removes this stat from the kpiFilter.
+ * Parent card must have `position: relative`.
+ */
+export const StatDeckButton = memo(function StatDeckButton({
+  sectionKey,
+  statId,
+}: {
+  sectionKey: DeckSectionKey;
+  statId: string;
+}) {
+  const { sections, toggleSection, setKpiFilter, availability } = useDeck();
+  const [hovered, setHovered] = useState(false);
+
+  const section   = sections.find(s => s.key === sectionKey);
+  const avail     = availability[sectionKey];
+  const isEnabled = section?.enabled ?? false;
+  const filter    = section?.kpiFilter ?? [];
+  // Stat is "in deck" when the section is on AND either all stats are shown (empty filter) or this id is explicitly included
+  const isInDeck  = isEnabled && (!filter.length || filter.includes(statId));
+
+  if (!avail?.available) return null;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInDeck) {
+      // Remove this stat from the filter
+      if (!filter.length) {
+        // Currently "show all" — expand to all-minus-this-one
+        const allIds = (KPI_SLIDE_STATS[sectionKey] ?? []).map(s => s.id);
+        const next   = allIds.filter(id => id !== statId);
+        setKpiFilter(sectionKey, next.length ? next : undefined);
+      } else {
+        const next = filter.filter(id => id !== statId);
+        setKpiFilter(sectionKey, next.length ? next : undefined);
+      }
+    } else {
+      // Add this stat — enable section if needed, then push id into filter
+      if (!isEnabled) toggleSection(sectionKey);
+      const next = [...new Set([...filter, statId])];
+      setKpiFilter(sectionKey, next);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={isInDeck ? 'Remove from deck' : 'Add to deck'}
+      style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        border: isInDeck
+          ? `0.5px solid ${hovered ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`
+          : '0.5px solid rgba(68,114,232,0.3)',
+        background: isInDeck
+          ? hovered ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)'
+          : hovered ? 'rgba(68,114,232,0.12)' : 'rgba(68,114,232,0.05)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.15s',
+        fontFamily: FONT,
+        flexShrink: 0,
+      }}
+    >
+      {isInDeck ? (
+        hovered ? (
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#EF4444" strokeWidth="1.6" strokeLinecap="round">
+            <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
+          </svg>
+        ) : (
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+            <polyline points="2 6 5 9 10 3" stroke="#22C55E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )
+      ) : (
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#4472E8" strokeWidth="1.5" strokeLinecap="round">
+          <line x1="6" y1="1" x2="6" y2="11" /><line x1="1" y1="6" x2="11" y2="6" />
+        </svg>
+      )}
+    </button>
+  );
+});

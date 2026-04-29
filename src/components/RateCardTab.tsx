@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import ExportButton from './ExportButton';
-import InsightGate from './InsightGate';
+import InsightGate, { StatDeckButton } from './InsightGate';
 import SortFilterButton from './SortFilterButton';
 import {
   BarChart,
@@ -58,14 +58,16 @@ interface KPICardProps {
   value: string;
   sub?: string;
   accent?: string;
+  deckBtn?: React.ReactNode;
 }
 
-function KPICard({ label, value, sub, accent }: KPICardProps) {
+function KPICard({ label, value, sub, accent, deckBtn }: KPICardProps) {
   return (
     <div
       className="rounded-xl p-4 flex flex-col gap-1"
-      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', position: 'relative' }}
     >
+      {deckBtn}
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div>
       <div className="text-2xl font-black" style={{ color: accent || '#252F3E' }}>{value}</div>
       {sub && <div className="text-xs text-gray-400">{sub}</div>}
@@ -433,33 +435,36 @@ export default function RateCardTab() {
       {canCompare && comparisons.length > 0 && summary && (
         <>
           {/* KPI summary */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2">
             <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Rate Card Summary</span>
-            <InsightGate sectionKey="rateCardKPIs" />
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
             <KPICard
               label="Shipments Analyzed"
               value={summary.totalShipments.toLocaleString()}
               sub={fileName || undefined}
+              deckBtn={<StatDeckButton sectionKey="rateCardKPIs" statId="totalShipments" />}
             />
             <KPICard
               label="ShipHero MRC Total"
               value={formatBigUSD(summary.rateCardTotal)}
               sub="Expected at negotiated rate"
               accent="#4472E8"
+              deckBtn={<StatDeckButton sectionKey="rateCardKPIs" statId="mrcTotal" />}
             />
             <KPICard
               label="Actual Total Paid"
               value={formatBigUSD(summary.actualTotal)}
               sub="From label cost in CSV"
               accent="#EF5252"
+              deckBtn={<StatDeckButton sectionKey="rateCardKPIs" statId="actualTotal" />}
             />
             <KPICard
               label="Total Delta"
               value={(summary.totalDelta >= 0 ? '+' : '') + formatBigUSD(summary.totalDelta)}
               sub={summary.totalDelta > 0.01 ? 'Overpaid vs MRC' : summary.totalDelta < -0.01 ? 'Saved vs MRC' : 'On rate'}
               accent={summary.totalDelta > 0.01 ? '#EF4444' : '#22C55E'}
+              deckBtn={<StatDeckButton sectionKey="rateCardKPIs" statId="totalDelta" />}
             />
           </div>
 

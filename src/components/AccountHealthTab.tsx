@@ -9,7 +9,7 @@ import ExportButton from './ExportButton';
 import { useData } from '../context/DataContext';
 import { inferServiceKey, SERVICE_LABELS } from '../data/shipheroRates';
 import { safeGetItem, STORAGE_KEYS } from '../utils/storageUtils';
-import InsightGate from './InsightGate';
+import InsightGate, { StatDeckButton } from './InsightGate';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const PALETTE = [
@@ -71,13 +71,15 @@ const STATUS_CONFIG: Record<HealthStatus, { label: string; bg: string; text: str
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function KPICard({
-  label, value, sub, accent, delta,
+  label, value, sub, accent, delta, deckBtn,
 }: {
   label: string; value: string; sub?: string; accent?: string; delta?: number;
+  deckBtn?: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl p-4 flex flex-col gap-1"
-      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      style={{ background: '#fff', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', position: 'relative' }}>
+      {deckBtn}
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div>
       <div className="text-2xl font-black" style={{ color: accent || '#252F3E' }}>{value}</div>
       <div className="flex items-center gap-2">
@@ -518,7 +520,6 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
           {/* KPI Cards */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Account Health Summary</span>
-            <InsightGate sectionKey="accountHealthKPIs" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <KPICard
@@ -527,11 +528,13 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
               sub="latest month"
               accent="#4472E8"
               delta={momOrders}
+              deckBtn={<StatDeckButton sectionKey="accountHealthKPIs" statId="orders" />}
             />
             <KPICard
               label={`Labels (${formatMonth(latestMonth)})`}
               value={fmtN(latestTotals?.labels ?? 0)}
               sub="shipping labels"
+              deckBtn={<StatDeckButton sectionKey="accountHealthKPIs" statId="labels" />}
             />
             <KPICard
               label="Carrier Spend"
@@ -539,6 +542,7 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
               sub="latest month"
               accent="#EF5252"
               delta={momSpend}
+              deckBtn={<StatDeckButton sectionKey="accountHealthKPIs" statId="carrierSpend" />}
             />
             <KPICard
               label="GMV"
@@ -546,12 +550,14 @@ export default function AccountHealthTab({ onManageWarehouses }: { onManageWareh
               sub="gross merch. value"
               accent="#22C55E"
               delta={momGMV}
+              deckBtn={<StatDeckButton sectionKey="accountHealthKPIs" statId="gmv" />}
             />
             <KPICard
               label="Platform Billing"
               value={fmtBig$(billingByMonth.get(latestMonth) ?? 0)}
               sub="Stripe billing"
               accent="#8B5CF6"
+              deckBtn={<StatDeckButton sectionKey="accountHealthKPIs" statId="platformBilling" />}
             />
           </div>
 

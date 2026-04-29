@@ -71,6 +71,8 @@ export interface DeckSectionToggle {
   layout?: 'standard' | 'wide';
   /** Row names to include (empty/null = show all) */
   rowFilter?: string[];
+  /** Stat tile IDs to show on KPI summary slides (empty/null = show all) */
+  kpiFilter?: string[];
   /** Inch offset from the default content position, applied in the slide preview and PPTX export */
   contentOffset?: { dx: number; dy: number };
   /** Freeform narrative text shown as bullet points on the slide and exported to PPTX/PDF */
@@ -93,6 +95,30 @@ export interface DataInstanceSlide {
   insight?: SectionInsight;
   notes?: string;
   snapshot?: string;
+}
+
+/** Two-column combined slide that displays two existing data sections side-by-side. */
+export interface CombinedSlide {
+  id: string;
+  enabled: boolean;
+  hidden?: boolean;
+  /** Slide title (e.g. "Account & Inventory Summary") */
+  title: string;
+  /** Optional uppercase category label above the title */
+  sectionLabel?: string;
+  /** Section key feeding the LEFT column. */
+  leftKey?: DeckSectionKey;
+  /** Section key feeding the RIGHT column. */
+  rightKey?: DeckSectionKey;
+  /** Speaker notes */
+  notes?: string;
+  /** Narrative bullets shown at the bottom of the slide */
+  narrative?: string;
+  /** Ordering anchor: 'after:cover' | 'after:<DeckSectionKey>' | 'end' */
+  orderKey: string;
+  /** Snapshot PNGs captured at export time, one per column */
+  leftSnapshot?: string;
+  rightSnapshot?: string;
 }
 
 export interface CustomDeckSlide {
@@ -148,9 +174,33 @@ export interface QBRDeckDocumentProps {
   fontOption?: 'A' | 'B' | 'C';
   coverPhoto?: string;  // base64 background image for cover slide
   coverColorScheme?: string;  // e.g. 'midnight', 'forest' — mapped to hex in generator
+  coverLayout?: 'A' | 'B' | 'C';  // title page layout variant
   statsRows?: import('../../utils/statsParser').MonthlyStatRow[];
   customSlides?: CustomDeckSlide[];
   dataInstances?: DataInstanceSlide[];
+  /** Two-column combined slides that pair two KPI summary sections side-by-side */
+  combinedSlides?: CombinedSlide[];
+  /** Prior-period comparison data for the Prior Quarter KPIs slide */
+  priorPeriod?: import('../../utils/periodComparison').PriorPeriodSummary | null;
+}
+
+/**
+ * Section keys that can be combined into a 2-column slide. Restricted to KPI
+ * summary sections because their content (≤5 stat tiles) actually fits at
+ * half-width without squashing.
+ */
+export const COMBINABLE_SECTION_KEYS: DeckSectionKey[] = [
+  'accountOverview',
+  'shippingKPIs',
+  'accountHealthKPIs',
+  'threePlKPIs',
+  'inventoryKPIs',
+  'rateCardKPIs',
+  'priorQuarterKPIs',
+];
+
+export function isCombinable(key: DeckSectionKey): boolean {
+  return COMBINABLE_SECTION_KEYS.includes(key);
 }
 
 // ── Agenda label map (for human-readable slide titles) ────────────────────────
