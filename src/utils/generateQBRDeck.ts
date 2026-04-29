@@ -2156,6 +2156,90 @@ export async function generateQBRDeck(
     (instanceByOrderKey[inst.orderKey] ??= []).push(inst);
   }
 
+  // ── Combined slide builder ───────────────────────────────────────────────
+  // Two-column slide pairing two KPI summary sections. Each column is the
+  // captured snapshot of the source section, scaled to half-width.
+  // The slide title is editable; the orange underline mirrors the standard slide
+  // title style; sidebar mark + slide number drawn natively.
+  const buildCombinedSlide = (cb: import('../components/pdf/QBRDeckDocument').CombinedSlide, num: number) => {
+    const slide = pptx.addSlide();
+    // Background
+    slide.addShape('rect', { x: 0, y: 0, w: W, h: H, fill: { color: C.LIGHT_BG }, line: { color: C.LIGHT_BG } });
+
+    // Header
+    const HX = 0.78, HY = 0.55;
+    if (cb.sectionLabel) {
+      slide.addText(cb.sectionLabel.toUpperCase(), {
+        x: HX, y: HY, w: 8.5, h: 0.20,
+        fontSize: 13, bold: true, color: C.BLUE, charSpacing: 1.5,
+      });
+    } else {
+      slide.addText('COMBINED', {
+        x: HX, y: HY, w: 8.5, h: 0.20,
+        fontSize: 13, bold: true, color: C.BLUE, charSpacing: 1.5,
+      });
+    }
+    slide.addText(cb.title || 'Combined Slide', {
+      x: HX, y: HY + 0.22, w: 8.5, h: 0.55,
+      fontSize: 26, bold: true, color: C.DARK,
+    });
+    slide.addShape('rect', {
+      x: HX, y: HY + 0.76, w: 1.4, h: 0.04,
+      fill: { color: C.ORANGE }, line: { color: C.ORANGE },
+    });
+
+    // Column area: 2 columns under the title
+    const COL_TOP    = 1.55;
+    const COL_BOTTOM = H - 0.4;
+    const COL_GAP    = 0.18;
+    const COL_LEFT_X = 0.78;
+    const COL_RIGHT_END = W - 0.3;
+    const totalW     = COL_RIGHT_END - COL_LEFT_X;
+    const colW       = (totalW - COL_GAP) / 2;
+    const colH       = COL_BOTTOM - COL_TOP;
+
+    const renderColumn = (snapshot: string | undefined, key: import('../components/pdf/QBRDeckDocument').DeckSectionKey | undefined, x: number) => {
+      // Card background
+      slide.addShape('rect', {
+        x, y: COL_TOP, w: colW, h: colH,
+        fill: { color: C.WHITE }, line: { color: 'E5E7EB', width: 0.5 },
+        rectRadius: 0.06,
+      });
+      if (snapshot && !isBlankSnapshot(snapshot)) {
+        // Snapshot is captured at full slide aspect (10×5.625). Fit into the column box
+        // preserving aspect; this preserves the table/chart look from the builder.
+        const PAD = 0.08;
+        const fitted = fitImage(1920, 1080, x + PAD, COL_TOP + PAD, colW - 2 * PAD, colH - 2 * PAD);
+        slide.addImage({ data: snapshot, ...fitted });
+      } else if (key) {
+        slide.addText(SECTION_LABELS_LOCAL[key], {
+          x: x + 0.15, y: COL_TOP + colH / 2 - 0.2, w: colW - 0.3, h: 0.4,
+          fontSize: 11, color: C.GRAY, align: 'center',
+        });
+      } else {
+        slide.addText('No section selected', {
+          x: x + 0.15, y: COL_TOP + colH / 2 - 0.2, w: colW - 0.3, h: 0.4,
+          fontSize: 11, color: C.GRAY, italic: true, align: 'center',
+        });
+      }
+    };
+
+    renderColumn(cb.leftSnapshot,  cb.leftKey,  COL_LEFT_X);
+    renderColumn(cb.rightSnapshot, cb.rightKey, COL_LEFT_X + colW + COL_GAP);
+
+    // Sidebar mark + slide number
+    addSlideMark(slide, num);
+
+    if (cb.narrative?.trim()) addNarrativeOverlay(slide, cb.narrative);
+    if (cb.notes) slide.addNotes(cb.notes);
+  };
+
+  // Group combined slides by their orderKey (after:<leftKey>)
+  const combinedByOrderKey: Record<string, import('../components/pdf/QBRDeckDocument').CombinedSlide[]> = {};
+  for (const cb of (props.combinedSlides ?? []).filter(c => c.enabled && !c.hidden)) {
+    (combinedByOrderKey[cb.orderKey] ??= []).push(cb);
+  }
+
   // Helper: emit a single DataInstanceSlide as a hybrid snapshot slide (or insight slide if no snapshot)
   const buildInstance = (inst: DataInstanceSlide) => {
     const label = inst.customLabel ?? SECTION_LABELS_LOCAL[inst.parentKey];
@@ -2196,12 +2280,36 @@ export async function generateQBRDeck(
         if (section.callout && _lastBuiltSlide) addCalloutPanel(_lastBuiltSlide, section.callout);
       }
     }
+    // Emit combined slides anchored after this section
+    for (const cb of combinedByOrderKey[`after:${section.key}`] ?? []) {
+      onProgress?.(`Building: ${cb.title || 'Combined slide'}`);
+      buildCombinedSlide(cb, slideNum++);
+    }
     // Emit data instances positioned after this section
     for (const inst of instancesByParent[section.key] ?? []) {
       if (inst.orderKey === `after:${section.key}`) buildInstance(inst);
     }
     // Insert custom slides after this section
     for (const cs of customByKey[`after:${section.key}`] ?? []) buildCustom(cs);
+  }
+
+  // Emit any orphaned combined slides whose anchor section is hidden/disabled.
+  // (When a combined slide is created, both source sections are auto-hidden so
+  // their `after:<leftKey>` anchor points to a section that won't render in the
+  // active loop. Catch those here.)
+  const renderedCombinedIds = new Set<string>();
+  for (const list of Object.values(combinedByOrderKey)) {
+    for (const cb of list) {
+      const anchor = cb.orderKey.startsWith('after:') ? cb.orderKey.slice(6) as DeckSectionKey : null;
+      if (anchor && activeDataKeys.has(anchor)) {
+        renderedCombinedIds.add(cb.id); // already emitted above
+      }
+    }
+  }
+  for (const cb of (props.combinedSlides ?? []).filter(c => c.enabled && !c.hidden)) {
+    if (renderedCombinedIds.has(cb.id)) continue;
+    onProgress?.(`Building: ${cb.title || 'Combined slide'}`);
+    buildCombinedSlide(cb, slideNum++);
   }
 
   // Emit any data instances not yet placed (orderKey doesn't match any active section)

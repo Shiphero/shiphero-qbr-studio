@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useData } from './DataContext';
 import { usePDF } from './PDFContext';
-import type { DeckSectionKey, DeckSectionToggle, SectionInsight, CustomDeckSlide, DataInstanceSlide } from '../components/pdf/QBRDeckDocument';
+import type { DeckSectionKey, DeckSectionToggle, SectionInsight, CustomDeckSlide, DataInstanceSlide, CombinedSlide } from '../components/pdf/QBRDeckDocument';
+import { COMBINABLE_SECTION_KEYS } from '../components/pdf/QBRDeckDocument';
 import type { DeckTemplate } from '../utils/deckTemplates';
 
 export const SECTION_ORDER: DeckSectionKey[] = [
@@ -62,6 +63,7 @@ export interface PersistedDeckState {
   sections: DeckSectionToggle[];
   customSlides: CustomDeckSlide[];
   dataInstances: DataInstanceSlide[];
+  combinedSlides?: CombinedSlide[];
   execSummary?: string;
 }
 
@@ -112,6 +114,11 @@ interface DeckContextValue {
   addDataInstance: (parentKey: DeckSectionKey) => DataInstanceSlide;
   updateDataInstance: (id: string, patch: Partial<DataInstanceSlide>) => void;
   removeDataInstance: (id: string) => void;
+  /** Two-column slides pairing two KPI summary sections side-by-side */
+  combinedSlides: CombinedSlide[];
+  addCombinedSlide: (leftKey: DeckSectionKey, rightKey: DeckSectionKey) => CombinedSlide;
+  updateCombinedSlide: (id: string, patch: Partial<CombinedSlide>) => void;
+  removeCombinedSlide: (id: string) => void;
   /** Shared exec summary — kept in sync between FollowUpDocument and Deck Builder cover panel */
   execSummary: string;
   setExecSummary: (v: string) => void;
@@ -183,6 +190,9 @@ export function DeckProvider({ children }: { children: ReactNode }) {
   const [dataInstances, setDataInstances] = useState<DataInstanceSlide[]>(
     () => loadDeckState().dataInstances ?? []
   );
+  const [combinedSlides, setCombinedSlides] = useState<CombinedSlide[]>(
+    () => loadDeckState().combinedSlides ?? []
+  );
   const [execSummary, setExecSummaryState] = useState<string>(
     () => loadDeckState().execSummary ?? ''
   );
@@ -190,14 +200,15 @@ export function DeckProvider({ children }: { children: ReactNode }) {
   const setExecSummary = (v: string) => setExecSummaryState(v);
 
   useEffect(() => {
-    saveDeckState({ sections, customSlides, dataInstances, execSummary });
-  }, [sections, customSlides, dataInstances, execSummary]);
+    saveDeckState({ sections, customSlides, dataInstances, combinedSlides, execSummary });
+  }, [sections, customSlides, dataInstances, combinedSlides, execSummary]);
 
   const clearDeck = () => {
     localStorage.removeItem(DECK_STORAGE_KEY);
     setSections(SECTION_ORDER.map(key => ({ key, enabled: false })));
     setCustomSlides([]);
     setDataInstances([]);
+    setCombinedSlides([]);
     setExecSummaryState('');
   };
 
@@ -210,6 +221,7 @@ export function DeckProvider({ children }: { children: ReactNode }) {
       }
       if (state.customSlides) setCustomSlides(state.customSlides);
       if (state.dataInstances) setDataInstances(state.dataInstances);
+      if (state.combinedSlides) setCombinedSlides(state.combinedSlides);
       if (state.execSummary !== undefined) setExecSummaryState(state.execSummary);
     } catch {
       console.warn('[DeckContext] applyImportedDeckState: invalid JSON');
@@ -327,6 +339,53 @@ export function DeckProvider({ children }: { children: ReactNode }) {
     setDataInstances(prev => prev.filter(d => d.id !== id));
   };
 
+  // ── Combined slides (2-column KPI pair) ────────────────────────────────────
+  /**
+   * Create a combined slide pairing two KPI summary sections.
+   * Both source sections are auto-hidden so they don't render twice in export.
+   * Returns the new slide.
+   */
+  const addCombinedSlide = (leftKey: DeckSectionKey, rightKey: DeckSectionKey): CombinedSlide => {
+    if (!COMBINABLE_SECTION_KEYS.includes(leftKey) || !COMBINABLE_SECTION_KEYS.includes(rightKey)) {
+      throw new Error(`addCombinedSlide: ${leftKey} or ${rightKey} is not a combinable KPI section`);
+    }
+    const slide: CombinedSlide = {
+      id: crypto.randomUUID(),
+      enabled: true,
+      title: `${SECTION_LABELS[leftKey]} & ${SECTION_LABELS[rightKey]}`,
+      leftKey, rightKey,
+      orderKey: `after:${leftKey}`,
+    };
+    setCombinedSlides(prev => [...prev, slide]);
+    // Hide both source sections so the combined slide is the only render
+    setSections(prev => prev.map(s =>
+      (s.key === leftKey || s.key === rightKey) ? { ...s, enabled: true, hidden: true } : s
+    ));
+    return slide;
+  };
+
+  const updateCombinedSlide = (id: string, patch: Partial<CombinedSlide>) => {
+    setCombinedSlides(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
+  };
+
+  /**
+   * Remove a combined slide. Restores both source sections to un-hidden so
+   * they go back to rendering as independent slides (still in their existing
+   * enabled/disabled state).
+   */
+  const removeCombinedSlide = (id: string) => {
+    const target = combinedSlides.find(c => c.id === id);
+    setCombinedSlides(prev => prev.filter(c => c.id !== id));
+    if (target) {
+      const restoreKeys: DeckSectionKey[] = [];
+      if (target.leftKey)  restoreKeys.push(target.leftKey);
+      if (target.rightKey) restoreKeys.push(target.rightKey);
+      setSections(prev => prev.map(s =>
+        restoreKeys.includes(s.key) ? { ...s, hidden: false } : s
+      ));
+    }
+  };
+
   const setLayout = (key: DeckSectionKey, layout: 'standard' | 'wide' | undefined) => {
     setSections(prev => prev.map(s => s.key === key ? { ...s, layout: layout || undefined } : s));
   };
@@ -359,6 +418,7 @@ export function DeckProvider({ children }: { children: ReactNode }) {
       setLayout, setRowFilter, setKpiFilter, setContentOffset, setNarrative, setCallout,
       clearDeck, applyTemplate, reorderDeck,
       dataInstances, addDataInstance, updateDataInstance, removeDataInstance,
+      combinedSlides, addCombinedSlide, updateCombinedSlide, removeCombinedSlide,
       execSummary, setExecSummary, applyImportedDeckState,
     }}>
       {children}
@@ -372,4 +432,4 @@ export function useDeck() {
   return ctx;
 }
 
-export type { SectionInsight, CustomDeckSlide };
+export type { SectionInsight, CustomDeckSlide, CombinedSlide };

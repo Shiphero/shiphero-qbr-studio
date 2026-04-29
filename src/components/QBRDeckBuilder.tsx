@@ -17,6 +17,7 @@ import type {
   CarrierMixRowPDF, ZoneComparisonPDF,
 } from './pdf/QBRDocument';
 import type { DeckSectionKey, QBRDeckDocumentProps, TeamMember, SectionInsight, DataInstanceSlide } from './pdf/QBRDeckDocument';
+import { COMBINABLE_SECTION_KEYS } from './pdf/QBRDeckDocument';
 import type { CustomDeckSlide } from '../context/DeckContext';
 import shipheroIsoUrl from '../assets/logos/shiphero-iso.png';
 import { TEAM_MEMBER_PRESETS } from '../data/teamMemberPresets';
@@ -641,7 +642,7 @@ function InlineInsightEditor({ sectionKey, insight, onSave }: {
 // ─── SlideListItem type ────────────────────────────────────────────────────
 interface SlideListItem {
   id: string;
-  type: 'cover' | 'data' | 'custom' | 'instance';
+  type: 'cover' | 'data' | 'custom' | 'instance' | 'combined';
   variant?: CustomDeckSlide['variant'];
   label: string;
   isFixed: boolean;
@@ -651,6 +652,9 @@ interface SlideListItem {
   instanceId?: string;
   /** For type==='instance': the parent section key */
   parentKey?: DeckSectionKey;
+  /** For type==='combined': source section keys for left/right columns */
+  leftKey?: DeckSectionKey;
+  rightKey?: DeckSectionKey;
 }
 
 // ─── Row filter slide keys ─────────────────────────────────────────────────
@@ -731,6 +735,59 @@ function SlideEditText({ field, value, placeholder, onSave, isEditing, onStart, 
       title="Click to edit"
     >
       {value ? value : <span style={{ opacity: 0.3, fontStyle: 'italic' }}>{placeholder}</span>}
+    </div>
+  );
+}
+
+// ─── Combined slide preview (2 column KPI pair) ──────────────────────────
+/**
+ * Renders a combined slide: an editable title bar across the top, then two
+ * columns showing scaled-down LiveSlidePreviews of the source sections.
+ * The two columns share the same canvas dimensions as a normal slide.
+ */
+function CombinedSlidePreview({
+  slide, previewData, width = 480,
+}: {
+  slide: import('../context/DeckContext').CombinedSlide;
+  previewData: SlidePreviewData;
+  width?: number;
+}) {
+  const H = Math.round(width * 9 / 16);
+  const colW = Math.round((width - 36) / 2);
+  return (
+    <div style={{ width, height: H, background: '#EDEEF2', borderRadius: 6, position: 'relative', flexShrink: 0, overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+      {/* Sidebar mark */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 14, background: '#252F3E' }} />
+      <div style={{ position: 'absolute', top: 4, left: 4, width: 6, height: 6, background: '#EF5252', transform: 'rotate(45deg)' }} />
+
+      {/* Combined title */}
+      <div style={{ paddingLeft: 22, paddingRight: 12, paddingTop: 10, paddingBottom: 4 }}>
+        <div style={{ fontSize: 8, fontWeight: 700, color: '#4472E8', letterSpacing: 1.5 }}>COMBINED</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#1C1C2E', marginTop: 2, lineHeight: 1.15 }}>{slide.title || 'Combined Slide'}</div>
+        <div style={{ width: 50, height: 2, background: '#EF5252', marginTop: 4 }} />
+      </div>
+
+      {/* Two column area */}
+      <div style={{ position: 'absolute', left: 22, right: 12, top: 60, bottom: 12, display: 'flex', gap: 8 }}>
+        {[slide.leftKey, slide.rightKey].map((key, i) => (
+          <div key={i} style={{ flex: 1, background: '#fff', borderRadius: 4, border: '1px solid #E5E7EB', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {key ? (
+              <ScaledSlidePreview
+                sectionKey={key}
+                label={SECTION_LABELS[key]}
+                data={previewData}
+                displayWidth={colW}
+                nativeWidth={480}
+                borderRadius={0}
+              />
+            ) : (
+              <div style={{ fontSize: 11, color: '#9CA3AF', padding: 8, textAlign: 'center' }}>
+                Pick a section for {i === 0 ? 'left' : 'right'} column
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -918,6 +975,7 @@ export default function QBRDeckBuilder() {
     toggleSection: toggleSectionCtx, setCustomLabel, setSectionLabel,
     setNotes, setInsight, setHidden, setDuplicates,
     customSlides, addCustomSlide, updateCustomSlide, removeCustomSlide,
+    combinedSlides, addCombinedSlide, updateCombinedSlide, removeCombinedSlide,
     setLayout, setRowFilter, setKpiFilter, setContentOffset, setNarrative, setCallout,
     clearDeck, applyTemplate, reorderDeck,
     dataInstances, addDataInstance, updateDataInstance, removeDataInstance,
@@ -1016,6 +1074,11 @@ export default function QBRDeckBuilder() {
     for (const inst of dataInstances) {
       (instancesByKey[inst.orderKey] ??= []).push(inst);
     }
+    // Group combined slides by their orderKey (after:<leftKey>)
+    const combinedByKey: Record<string, typeof combinedSlides> = {};
+    for (const cb of combinedSlides.filter(c => c.enabled)) {
+      (combinedByKey[cb.orderKey] ??= []).push(cb);
+    }
 
     const result: SlideListItem[] = [
       { id: 'cover', type: 'cover', label: 'Cover Slide', isFixed: true, isHidden: false, duplicates: 0 },
@@ -1026,8 +1089,26 @@ export default function QBRDeckBuilder() {
       result.push({ id: cs.id, type: 'custom', variant: cs.variant, label: cs.title || 'Untitled', isFixed: false, isHidden: !!cs.hidden, duplicates: cs.duplicates ?? 0 });
     }
 
+    // Hide source sections that are absorbed into a combined slide
+    const absorbedKeys = new Set<DeckSectionKey>();
+    for (const cb of combinedSlides.filter(c => c.enabled)) {
+      if (cb.leftKey)  absorbedKeys.add(cb.leftKey);
+      if (cb.rightKey) absorbedKeys.add(cb.rightKey);
+    }
+
     for (const s of enabledSections) {
-      result.push({ id: s.key, type: 'data', label: s.customLabel || SECTION_LABELS[s.key], isFixed: false, isHidden: !!s.hidden, duplicates: s.duplicates ?? 0 });
+      if (!absorbedKeys.has(s.key)) {
+        result.push({ id: s.key, type: 'data', label: s.customLabel || SECTION_LABELS[s.key], isFixed: false, isHidden: !!s.hidden, duplicates: s.duplicates ?? 0 });
+      }
+      // Append any combined slides anchored after this section
+      for (const cb of combinedByKey[`after:${s.key}`] ?? []) {
+        result.push({
+          id: cb.id, type: 'combined',
+          label: cb.title || 'Combined',
+          isFixed: false, isHidden: !!cb.hidden, duplicates: 0,
+          leftKey: cb.leftKey, rightKey: cb.rightKey,
+        });
+      }
       // Append any data instances ordered after this section
       for (const inst of instancesByKey[`after:${s.key}`] ?? []) {
         result.push({
@@ -1047,7 +1128,7 @@ export default function QBRDeckBuilder() {
     }
 
     return result;
-  }, [enabledSections, customSlides, dataInstances]);
+  }, [enabledSections, customSlides, dataInstances, combinedSlides]);
 
   // ── Unified slide reorder ───────────────────────────────────────────────
   const handleSlideReorder = useCallback((fromListIdx: number, toListIdx: number) => {
@@ -1312,6 +1393,26 @@ export default function QBRDeckBuilder() {
         })
       );
 
+      // Capture left/right snapshots for combined slides
+      const enabledCombined = combinedSlides.filter(c => c.enabled && !c.hidden);
+      const combinedWithSnapshots: typeof combinedSlides = await Promise.all(
+        enabledCombined.map(async cb => {
+          const out = { ...cb };
+          for (const side of ['leftKey', 'rightKey'] as const) {
+            const key = cb[side];
+            if (!key || SKIP_SNAPSHOT.has(key)) continue;
+            try {
+              const png = await snapshotSection(key, SECTION_LABELS[key], previewData, snapshotContainerRef);
+              if (png && !isBlankSnapshot(png)) {
+                if (side === 'leftKey') out.leftSnapshot = png;
+                else                    out.rightSnapshot = png;
+              }
+            } catch { /* ignore */ }
+          }
+          return out;
+        })
+      );
+
       const docProps: QBRDeckDocumentProps = {
         clientName: clientName || 'Client', reportDate: formattedDate,
         reportingPeriod: reportingPeriod || undefined,
@@ -1324,6 +1425,7 @@ export default function QBRDeckBuilder() {
         fontOption: selectedFont, statsRows: statsRows.length > 0 ? statsRows : undefined,
         customSlides: customSlides.length > 0 ? customSlides : undefined,
         dataInstances: instancesWithSnapshots.length > 0 ? instancesWithSnapshots : undefined,
+        combinedSlides: combinedWithSnapshots.length > 0 ? combinedWithSnapshots : undefined,
         priorPeriod: priorPeriod ?? undefined,
       };
       const blob = await generateQBRDeck(docProps, msg => setGenerateProgress(msg));
@@ -1338,7 +1440,7 @@ export default function QBRDeckBuilder() {
       console.error('Deck generation failed:', err);
       alert('Failed to generate deck. Please try again.');
     } finally { setGenerateProgress(null); }
-  }, [clientName, reportDate, reportingPeriod, sections, teamMembers, kpis, customerStats, costGapRows, carrierMix, zoneComparisons, inventoryData, displayActions, log, clientLogo, deckLogo, coverPhoto, selectedFont, statsRows, customSlides, previewData, dataInstances, recordDeckExport]);
+  }, [clientName, reportDate, reportingPeriod, sections, teamMembers, kpis, customerStats, costGapRows, carrierMix, zoneComparisons, inventoryData, displayActions, log, clientLogo, deckLogo, coverPhoto, selectedFont, statsRows, customSlides, previewData, dataInstances, combinedSlides, recordDeckExport]);
 
   // ── Outer generate handler — shows pre-flight modal if needed ────────────
   const handleGenerate = useCallback(() => {
@@ -1358,6 +1460,7 @@ export default function QBRDeckBuilder() {
   const selectedSection    = selectedSlideItem?.type === 'data' ? sections.find(s => s.key === selectedKey) : null;
   const selectedInstance   = selectedSlideItem?.type === 'instance' ? dataInstances.find(inst => inst.id === selectedKey) : null;
   const selectedCustom     = selectedSlideItem?.type === 'custom' ? customSlides.find(c => c.id === selectedKey) : null;
+  const selectedCombined   = selectedSlideItem?.type === 'combined' ? combinedSlides.find(c => c.id === selectedKey) : null;
   /** Effective section key — for instances, use parentKey for data/meta lookups */
   const effectiveSectionKey = (selectedInstance?.parentKey ?? selectedKey) as DeckSectionKey;
   const selectedLabel     = selectedSlideItem?.type === 'cover' ? 'Cover Slide'
@@ -1583,6 +1686,12 @@ export default function QBRDeckBuilder() {
                             : previewData}
                           displayWidth={160}
                         />
+                      ) : slide.type === 'combined' ? (
+                        <CombinedSlidePreview
+                          slide={combinedSlides.find(c => c.id === slide.id)!}
+                          previewData={previewData}
+                          width={160}
+                        />
                       ) : (
                         <SlideThumbnail
                           sectionKey={slide.id}
@@ -1620,7 +1729,7 @@ export default function QBRDeckBuilder() {
                       {/* Slide number + completion dot */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
                         <span style={{ fontSize: 9, fontWeight: 700, color: '#475569', background: 'rgba(255,255,255,0.06)', borderRadius: 4, padding: '1px 4px' }}>{listIdx + 1}</span>
-                        <CompletionDot sectionKey={slide.id} sections={sections} itemType={slide.type === 'instance' ? 'data' : slide.type} />
+                        <CompletionDot sectionKey={slide.id} sections={sections} itemType={slide.type === 'instance' || slide.type === 'combined' ? 'data' : slide.type} />
                         {slide.isHidden && (
                           <span style={{ fontSize: 8, fontWeight: 600, color: '#475569', background: 'rgba(71,85,105,0.2)', borderRadius: 3, padding: '1px 4px' }}>HIDDEN</span>
                         )}
@@ -1732,6 +1841,12 @@ export default function QBRDeckBuilder() {
                   <EditableCustomSlide
                     slide={selectedCustom}
                     onUpdate={patch => updateCustomSlide(selectedCustom.id, patch)}
+                  />
+                ) : selectedSlideItem?.type === 'combined' && selectedCombined ? (
+                  <CombinedSlidePreview
+                    slide={selectedCombined}
+                    previewData={previewData}
+                    width={480}
                   />
                 ) : (
                   <SlideThumbnail
@@ -1874,6 +1989,44 @@ export default function QBRDeckBuilder() {
                             >×</button>
                           </div>
                         )}
+                        {/* Combine with… (KPI summary sections only) */}
+                        {selectedSlideItem?.type === 'data' && COMBINABLE_SECTION_KEYS.includes(selectedKey as DeckSectionKey) && (() => {
+                          const selfKey = selectedKey as DeckSectionKey;
+                          const partners = COMBINABLE_SECTION_KEYS.filter(k =>
+                            k !== selfKey
+                            && availability[k].available
+                            // Don't offer keys already absorbed into a combined slide
+                            && !combinedSlides.some(c => c.enabled && (c.leftKey === k || c.rightKey === k))
+                            && !combinedSlides.some(c => c.enabled && (c.leftKey === selfKey || c.rightKey === selfKey))
+                          );
+                          if (partners.length === 0) return null;
+                          return (
+                            <details style={{ position: 'relative' }}>
+                              <summary style={{ listStyle: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(68,114,232,0.3)', background: 'rgba(68,114,232,0.08)', color: BLUE, fontWeight: 600, fontSize: 11, fontFamily: FONT }}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/>
+                                </svg>
+                                Combine with…
+                              </summary>
+                              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 10, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, padding: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', minWidth: 200 }}>
+                                {partners.map(k => (
+                                  <button
+                                    key={k}
+                                    onClick={() => {
+                                      const newSlide = addCombinedSlide(selfKey, k);
+                                      setSelectedKey(newSlide.id);
+                                    }}
+                                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: NAVY, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F0')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                  >
+                                    {SECTION_LABELS[k]}
+                                  </button>
+                                ))}
+                              </div>
+                            </details>
+                          );
+                        })()}
                       </>
                     )}
                   </div>
@@ -2014,6 +2167,88 @@ export default function QBRDeckBuilder() {
                   </div>
                 </div>
               )}
+
+              {/* ── Combined slide editor ── */}
+              {selectedSlideItem?.type === 'combined' && selectedCombined && (() => {
+                const combinable = COMBINABLE_SECTION_KEYS.filter(k => availability[k].available);
+                const update = (patch: Partial<typeof selectedCombined>) => updateCombinedSlide(selectedCombined.id, patch);
+                const cb = selectedCombined;
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Combined Slide</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                      <CfField label="Slide Title">
+                        <input value={cb.title}
+                          onChange={e => update({ title: e.target.value })}
+                          placeholder="e.g. Account & Inventory Summary"
+                          style={CF_INPUT} />
+                      </CfField>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'end' }}>
+                        <CfField label="Left Column">
+                          <select value={cb.leftKey ?? ''}
+                            onChange={e => update({ leftKey: (e.target.value || undefined) as DeckSectionKey | undefined })}
+                            style={CF_INPUT}>
+                            <option value="">— pick a section —</option>
+                            {combinable.map(k => (
+                              <option key={k} value={k} disabled={k === cb.rightKey}>{SECTION_LABELS[k]}</option>
+                            ))}
+                          </select>
+                        </CfField>
+                        <button
+                          onClick={() => update({ leftKey: cb.rightKey, rightKey: cb.leftKey })}
+                          title="Swap left and right"
+                          style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #E5E7EB', background: '#fff', color: NAVY, cursor: 'pointer', fontFamily: FONT, fontSize: 14, height: 36 }}
+                        >⇄</button>
+                        <CfField label="Right Column">
+                          <select value={cb.rightKey ?? ''}
+                            onChange={e => update({ rightKey: (e.target.value || undefined) as DeckSectionKey | undefined })}
+                            style={CF_INPUT}>
+                            <option value="">— pick a section —</option>
+                            {combinable.map(k => (
+                              <option key={k} value={k} disabled={k === cb.leftKey}>{SECTION_LABELS[k]}</option>
+                            ))}
+                          </select>
+                        </CfField>
+                      </div>
+
+                      <CfField label="Section Label (optional)">
+                        <input value={cb.sectionLabel ?? ''}
+                          onChange={e => update({ sectionLabel: e.target.value || undefined })}
+                          placeholder="e.g. EXECUTIVE SUMMARY"
+                          style={CF_INPUT} />
+                      </CfField>
+
+                      <CfField label="Narrative (optional)">
+                        <textarea value={cb.narrative ?? ''}
+                          onChange={e => update({ narrative: e.target.value || undefined })}
+                          placeholder="Bullet points appear at the bottom of the slide…"
+                          rows={3}
+                          style={CF_TA} />
+                      </CfField>
+
+                      <CfField label="Speaker Notes (optional)">
+                        <textarea value={cb.notes ?? ''}
+                          onChange={e => update({ notes: e.target.value || undefined })}
+                          rows={2}
+                          style={CF_TA} />
+                      </CfField>
+
+                      <button
+                        onClick={() => {
+                          if (!confirm('Remove this combined slide? Both source sections will return to rendering as separate slides.')) return;
+                          removeCombinedSlide(cb.id);
+                          setSelectedKey('cover');
+                        }}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: '#FEF2F2', color: '#EF4444', fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: FONT, alignSelf: 'flex-start' }}
+                      >
+                        Remove Combined Slide
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* ── KPI stat tile selector ── */}
               {!isStructural && selectedSlideItem?.type === 'data' && (() => {
