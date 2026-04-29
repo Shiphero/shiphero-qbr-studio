@@ -5,6 +5,11 @@ declare module '*.png' {
   const src: string;
   export default src;
 }
+// Vite ?inline query forces base64 data-URL encoding
+declare module '*.png?inline' {
+  const src: string;
+  export default src;
+}
 declare module '*.svg' {
   const src: string;
   export default src;

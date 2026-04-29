@@ -2,7 +2,7 @@ import PptxGenJS from 'pptxgenjs';
 import type { QBRDeckDocumentProps, DeckSectionKey, DeckSectionToggle, CustomDeckSlide, DataInstanceSlide } from '../components/pdf/QBRDeckDocument';
 import type { MonthlyStatRow } from './statsParser';
 import { dedupeWarehouseRows, formatMonth } from './statsParser';
-import shipheroWhiteUrl from '../assets/logos/shiphero-white.png';
+import shipheroWhiteUrl from '../assets/logos/shiphero-white.png?inline';
 import { getIconDataUrl } from './deckIcons';
 import { COVER_COLOR_SCHEMES } from '../components/QBRDeckBuilder';
 import { applyKpiFilter } from './kpiSlideStats';
@@ -375,7 +375,7 @@ function buildCoverSlide(pptx: PptxGenJS, props: QBRDeckDocumentProps, num: numb
   });
 
   // ShipHero logo — use white version on dark bg, colored version on white bg
-  slide.addImage({ path: shipheroWhiteUrl, x: BOX_X + (BOX_W / 2 - shW) / 2, y: BOX_Y + (BOX_H - shH) / 2, w: shW, h: shH });
+  slide.addImage({ data: shipheroWhiteUrl, x: BOX_X + (BOX_W / 2 - shW) / 2, y: BOX_Y + (BOX_H - shH) / 2, w: shW, h: shH });
 
   // Vertical divider between logos
   const divX = BOX_X + BOX_W / 2;
@@ -2022,20 +2022,14 @@ export async function generateQBRDeck(
     const wide = section.layout === 'wide';
     const count = 1 + (section.duplicates ?? 0);
     for (let d = 0; d < count; d++) {
-      // Use snapshot if available and non-blank, otherwise rebuild from data
-      const useSnapshot = section.snapshot && !isBlankSnapshot(section.snapshot);
-      if (useSnapshot) {
-        const label = (section.customLabel ?? SECTION_LABELS_LOCAL[section.key]);
-        buildSnapshotSlide(section.snapshot!, label, slideNum++, notesFor(section.key), section.narrative);
-      } else {
-        if (section.snapshot) console.warn(`[QBR] Blank snapshot discarded for section: ${section.key}`);
-        buildSectionSlide(pptx, section, wide, slideNum++, props, agendaItems, titleFor, sectionLabelFor, notesFor);
-        if (section.narrative?.trim() && _lastBuiltSlide) {
-          addNarrativeOverlay(_lastBuiltSlide, section.narrative);
-        }
-        if (section.callout && _lastBuiltSlide) {
-          addCalloutPanel(_lastBuiltSlide, section.callout);
-        }
+      // Always use native pptxgenjs builders so all text and charts are editable/moveable in
+      // Google Slides and PowerPoint. Snapshots are intentionally skipped for section slides.
+      buildSectionSlide(pptx, section, wide, slideNum++, props, agendaItems, titleFor, sectionLabelFor, notesFor);
+      if (section.narrative?.trim() && _lastBuiltSlide) {
+        addNarrativeOverlay(_lastBuiltSlide, section.narrative);
+      }
+      if (section.callout && _lastBuiltSlide) {
+        addCalloutPanel(_lastBuiltSlide, section.callout);
       }
     }
     // Emit data instances positioned after this section
